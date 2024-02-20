@@ -30,6 +30,16 @@ class Command(Protocol):
         ...
 
 
+class RequestHandler(Protocol):
+
+    def run(self, event: dict) -> None:
+        ...
+
+    @property
+    def route_key(self) -> str:
+        ...
+
+
 class SequenceBuilder(Protocol):
 
     def generate_sequence(self) -> list[Command]:

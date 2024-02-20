@@ -106,7 +106,7 @@ class JsonSnakeToCamelSerializer:
         return components[0] + ''.join(x.title() for x in components[1:])
 
 
-class JsonCamelToSnakeCaseDeserializer:
+class JsonCamelToSnakeDeserializer:
 
     def deserialize(self, data: str) -> typing.Union[dict, list]:
         data_dict = json.loads(data)

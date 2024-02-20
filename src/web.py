@@ -1,8 +1,23 @@
 import json
 from abc import ABC
 
-from src.abstractions import SequenceBuilder, ApplicationContext
+from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Serializer
 from src.application import CommandPipeline
+
+
+class WebRunner:
+
+    def __init__(self,
+                 request_handlers: list[RequestHandler],
+                 serializer: Serializer):
+        self.__serializer = serializer
+        self.__request_handlers = request_handlers
+
+    def run(self, event) -> dict:
+        # request_handler_matches = filter(lambda x: x.route_key == event['routeKey'], self.__request_handlers)
+        # if request_handler_matches ==
+        # context: ApplicationContext = request_handler_matches[0](event=event)
+        ...
 
 
 class RequestHandlerBase(ABC):
@@ -14,7 +29,7 @@ class RequestHandlerBase(ABC):
         self.__route_key = route_key
         self.__sequence = sequence
 
-    def run(self, event: dict) -> None:
+    def run(self, event: dict) -> ApplicationContext:
         body = None
         auth_user_id = None
         parameters = {}
@@ -38,12 +53,14 @@ class RequestHandlerBase(ABC):
                 body = json_body
             except ValueError:
                 body = event['body']
-        self.__command_pipeline.execute_commands(context=ApplicationContext(body=body,
-                                                                            auth_user_id=auth_user_id,
-                                                                            parameters=parameters,
-                                                                            error_capsules=[]),
+        context = ApplicationContext(body=body,
+                                     auth_user_id=auth_user_id,
+                                     parameters=parameters,
+                                     error_capsules=[])
+        self.__command_pipeline.execute_commands(context=context,
                                                  sequence=self.__sequence)
-    
+        return context
+
     @property
     def route_key(self) -> str:
         return self.__route_key

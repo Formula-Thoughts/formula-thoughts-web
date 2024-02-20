@@ -3,12 +3,13 @@ from unittest.mock import Mock, MagicMock
 
 from callee import Captor, Any
 
-from src.abstractions import SequenceBuilder, ApplicationContext
+from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Response
 from src.application import CommandPipeline
-from src.web import RequestHandlerBase
+from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
+from src.web import RequestHandlerBase, WebRunner
 
 
-class RequestHandler(RequestHandlerBase):
+class ExampleRequestHandler(RequestHandlerBase):
 
     def __init__(self, mock_sequence: SequenceBuilder, command_pipeline: CommandPipeline):
         super().__init__("GET /test/route", mock_sequence, command_pipeline)
@@ -19,7 +20,7 @@ class TestRequestHandler(TestCase):
     def setUp(self):
         self.__mock_sequence: SequenceBuilder = Mock()
         self.__mock_pipeline: CommandPipeline = Mock()
-        self.__sut = RequestHandler(mock_sequence=self.__mock_sequence, command_pipeline=self.__mock_pipeline)
+        self.__sut = ExampleRequestHandler(mock_sequence=self.__mock_sequence, command_pipeline=self.__mock_pipeline)
 
     def test_handle_basic_request(self):
         # arrange
@@ -28,7 +29,7 @@ class TestRequestHandler(TestCase):
         event = {}
 
         # act
-        self.__sut.run(event=event)
+        context = self.__sut.run(event=event)
 
         context_captor = Captor()
 
@@ -48,6 +49,9 @@ class TestRequestHandler(TestCase):
             self.assertEqual(context.auth_user_id, None)
             self.assertEqual(context.parameters, {})
             self.assertEqual(context.error_capsules, [])
+
+        with self.subTest(msg="assert context was returned"):
+            self.assertEqual(context, context_captor.arg)
 
     def test_handle_request_with_json_body(self):
         # arrange
@@ -149,3 +153,92 @@ class TestRequestHandler(TestCase):
         with self.subTest(msg="assert context was built correctly"):
             context: ApplicationContext = context_captor.arg
             self.assertEqual(context.parameters, {"path_param1": "value1", "path_param2": "value1", "path_param3": "value1", "path_param4": 4.2})
+
+
+class TestWebRunner(TestCase):
+
+    def setUp(self):
+        self.__mock_handler1: RequestHandler = Mock()
+        self.__mock_handler2: RequestHandler = Mock()
+        self.__mock_handler3: RequestHandler = Mock()
+        self.__sut = WebRunner(request_handlers=[self.__mock_handler1, self.__mock_handler2, self.__mock_handler3],
+                               serializer=JsonSnakeToCamelSerializer())
+
+    def test_run_basic(self):
+        # arrange
+        event = {
+            "routeKey": "GET /test/path1",
+            "body": "{\"testField\": \"testValue\"}"
+        }
+        context = ApplicationContext(response=Response(body={
+            "this_is_a_message": "message"
+        }, status_code=200))
+        self.__mock_handler1.run = MagicMock(return_value=context)
+        self.__mock_handler1.route_key = MagicMock(return_value="GET /test/path1")
+
+        # act
+        response = self.__sut.run(event=event)
+
+        # assert
+        with self.subTest(msg="assert correct handler was run"):
+            self.__mock_handler1.run.assert_called_once()
+
+        # assert
+        with self.subTest(msg="assert correct handler was run with event"):
+            self.__mock_handler1.run.assert_called_with(event=event)
+
+        # assert
+        with self.subTest(msg="body matches"):
+            self.assertEqual(response['body'], "{\"thisIsAMessage\": \"message\"}")
+
+        with self.subTest(msg="status code matches"):
+            self.assertEqual(response['statusCode'], 200)
+
+        with self.subTest(msg="assert headers match"):
+            self.assertEqual(response['headers'], {"Content-Type": "application/json"})
+
+    def test_run_basic_with_no_route_match(self):
+        # arrange
+        event = {
+            "roueyKey": "POST /test/path1",
+            "body": "{\"testField\": \"testValue\"}"
+        }
+        self.__mock_handler1.run = MagicMock()
+        self.__mock_handler1.route_key = MagicMock(return_value="GET /test/path1")
+
+        # act
+        response = self.__sut.run(event=event)
+
+        # assert
+        with self.subTest(msg="assert correct handler was not run"):
+            self.__mock_handler1.run.assert_not_called()
+
+        # assert
+        with self.subTest(msg="body matches"):
+            self.assertEqual(response['body'], "{\"message\": \"route POST /test/path1 not found\"}")
+
+        with self.subTest(msg="status code matches"):
+            self.assertEqual(response['statusCode'], 404)
+
+    def test_run_basic_with_exception(self):
+        # arrange
+        event = {
+            "roueyKey": "GET /test/path1",
+            "body": "{\"testField\": \"testValue\"}"
+        }
+        self.__mock_handler1.run = MagicMock(return_value=Exception("test exception"))
+        self.__mock_handler1.route_key = MagicMock(return_value="GET /test/path1")
+
+        # act
+        response = self.__sut.run(event=event)
+
+        # assert
+        with self.subTest(msg="assert correct handler was not run"):
+            self.__mock_handler1.run.assert_called_once()
+
+        # assert
+        with self.subTest(msg="body matches"):
+            self.assertEqual(response['body'], "{\"message\": \"internal server error :(\"}")
+
+        with self.subTest(msg="status code matches"):
+            self.assertEqual(response['statusCode'], 500)

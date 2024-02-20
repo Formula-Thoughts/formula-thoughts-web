@@ -1,0 +1,6 @@
+jsonschema==4.17.3
+filetype==1.2.0
+boto3==1.26.50
+simple-injection==0.2.5
+validators==0.20.0
+callee==0.3.1
