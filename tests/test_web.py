@@ -47,6 +47,7 @@ class TestRequestHandler(TestCase):
             self.assertEqual(context.body, None)
             self.assertEqual(context.auth_user_id, None)
             self.assertEqual(context.parameters, {})
+            self.assertEqual(context.error_capsules, [])
 
     def test_handle_request_with_json_body(self):
         # arrange
