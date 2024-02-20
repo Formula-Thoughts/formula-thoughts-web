@@ -1,0 +1,124 @@
+import json
+import re
+import typing
+from enum import Enum
+
+
+def all_annotations(cls):
+    d = {}
+    for c in cls.mro():
+        try:
+            d.update(**c.__annotations__)
+        except AttributeError:
+            # object, at least, has no __annotations__ attribute.
+            pass
+    return d
+
+
+T = typing.TypeVar("T")
+
+
+class ObjectMapper:
+
+    def map_to_dict_and_ignore_none_fields(self, _from, to: typing.Type[T]) -> dict:
+        print(f"{vars(_from).items()}")
+        mapped = self.__generic_map(_from=_from,
+                                    to=to,
+                                    propValues=vars(_from).items())
+        new_dict = mapped.__dict__
+        self.__to_dict_and_ignore_none_fields(new_dict=new_dict, mapped=mapped)
+        return new_dict
+
+    def __to_dict_and_ignore_none_fields(self, new_dict: dict, mapped):
+        for property, value in list(new_dict.items()):
+            try:
+                if bool(typing.get_type_hints(getattr(mapped, property))):
+                    self.__to_dict_and_ignore_none_fields(
+                        new_dict=value,
+                        mapped=getattr(mapped, property))
+            except TypeError:
+                print(f"value {property} skipped")
+            if value is None:
+                new_dict.pop(property)
+
+    def map(self, _from, to: typing.Type[T]) -> T:
+        print(f"{vars(_from).items()}")
+        return self.__generic_map(_from=_from,
+                                  to=to,
+                                  propValues=vars(_from).items())
+
+    def map_from_dict(self, _from, to: typing.Type[T]) -> T:
+        print(_from.items())
+        return self.__generic_map(_from=_from,
+                                  to=to,
+                                  propValues=_from.items())
+
+    def map_to_dict(self, _from, to: typing.Type[T]) -> dict:
+        print(f"{vars(_from).items()}")
+        return self.__generic_map(_from=_from,
+                                  to=to,
+                                  propValues=vars(_from).items(),
+                                  map_callback=lambda x: x.__dict__)
+
+    def __generic_map(self, _from, to, propValues, map_callback=lambda x: x):
+        new_dto = to()
+        dict_to = all_annotations(to)
+        print("START MAPPING")
+        print(f"all annotations from DTO {dict_to}")
+        print(f"all props from _from {propValues}")
+        for property, value in propValues:
+            if property in dict_to:
+                if bool(typing.get_type_hints(dict_to[property])):
+                    setattr(new_dto, property, map_callback(self.map(_from=value, to=dict_to[property])))
+                elif (typing.get_origin(dict_to[property]) is list and
+                     (bool(typing.get_type_hints(typing.get_args(dict_to[property])[0])))):
+                    collection = []
+                    sub_item_to = typing.get_args(dict_to[property])[0]
+                    for item in value:
+                        collection.append(map_callback(self.map(_from=item, to=sub_item_to)))
+                    setattr(new_dto, property, collection)
+                else:
+                    new_dto.__dict__[property] = value
+        print(f"__generic_map from {type(_from)} {to} and mapped {_from} out -> {new_dto}")
+        return map_callback(new_dto)
+
+
+class JsonSnakeToCamelSerializer:
+
+    def serialize(self, data: typing.Union[dict, list]) -> str:
+        return json.dumps(self.__snake_case_to_camel_case_dict(d=data), default=str)
+
+    def __snake_case_to_camel_case_dict(self, d):
+        if isinstance(d, list):
+            return [self.__snake_case_to_camel_case_dict(i) if isinstance(i, (dict, list)) else self.__format_value(i) for i in d]
+        return {self.__snake_case_key_to_camel_case(a): self.__snake_case_to_camel_case_dict(b) if isinstance(b, (
+            dict, list)) else self.__format_value(b) for a, b in d.items()}
+
+    @staticmethod
+    def __format_value(value) -> typing.Any:
+        if(isinstance(value, Enum)):
+            return value.value
+        return value
+
+    @staticmethod
+    def __snake_case_key_to_camel_case(key: str) -> str:
+        components = key.split('_')
+        return components[0] + ''.join(x.title() for x in components[1:])
+
+
+class JsonCamelToSnakeCaseDeserializer:
+
+    def deserialize(self, data: str) -> typing.Union[dict, list]:
+        data_dict = json.loads(data)
+        return self.__camel_case_to_snake_case_dict(d=data_dict)
+
+    def __camel_case_to_snake_case_dict(self, d):
+        if isinstance(d, list):
+            return [self.__camel_case_to_snake_case_dict(i) if isinstance(i, (dict, list)) else i for i in d]
+        return {self.__camel_case_key_to_snake_case(a): self.__camel_case_to_snake_case_dict(b) if isinstance(b, (
+            dict, list)) else b for a, b in d.items()}
+
+    @staticmethod
+    def __camel_case_key_to_snake_case(key: str) -> str:
+        words = re.findall(r'[A-Z]?[a-z]+|[A-Z]{2,}(?=[A-Z][a-z]|\d|\W|$)|\d+', key)
+        return '_'.join(map(str.lower, words))
