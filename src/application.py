@@ -3,47 +3,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Protocol, Union
 
-from src.abstractions import Logger
+from src.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext
 
 SUBSEQUENCE = "subsequence"
 COMMAND = "command"
-
-
-@dataclass(unsafe_hash=True)
-class Response:
-    body: dict = None
-    status_code: int = None
-
-
-@dataclass(unsafe_hash=True)
-class Error:
-    msg: str = None
-    status_code: int = None
-
-
-@dataclass(unsafe_hash=True)
-class ApplicationContext:
-    body: dict = None
-    error_capsules: list[Error] = field(default_factory=lambda: [])
-    response: Response = None
-
-
-class Command(Protocol):
-
-    def run(self, context: ApplicationContext) -> None:
-        ...
-
-
-class SequenceBuilder(Protocol):
-
-    def generate_sequence(self) -> list[Command]:
-        ...
-
-    def build(self):
-        ...
-
-
-SequenceComponent = Union[SequenceBuilder, Command]
 
 
 class FluentSequenceBuilder(ABC):
@@ -80,13 +43,13 @@ class FluentSequenceBuilder(ABC):
         return list(map(lambda x: x[1], self.__components))
 
 
-class MiddlewarePipeline:
+class CommandPipeline:
 
     def __init__(self, logger: Logger):
         self.__logger = logger
 
-    def execute_middleware(self, context: ApplicationContext,
-                           sequence: SequenceBuilder):
+    def execute_commands(self, context: ApplicationContext,
+                         sequence: SequenceBuilder):
         middleware = sequence.generate_sequence()
         for action in middleware:
             name = "anonymous"
