@@ -4,7 +4,7 @@ from src.abstractions import SequenceBuilder
 from src.application import CommandPipeline
 
 
-class RequestHandler(ABC):
+class RequestHandlerBase(ABC):
 
     def __init__(self, route_key: str,
                  sequence: SequenceBuilder,
@@ -13,7 +13,7 @@ class RequestHandler(ABC):
         self.__route_key = route_key
         self.__sequence = sequence
 
-    def run(self) -> None:
+    def run(self, event: dict) -> None:
         ...
     
     @property

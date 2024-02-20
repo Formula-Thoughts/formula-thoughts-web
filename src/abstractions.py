@@ -17,7 +17,9 @@ class Error:
 
 @dataclass(unsafe_hash=True)
 class ApplicationContext:
-    body: dict = None
+    body: typing.Union[dict, str, list] = None
+    auth_user_id: str = None
+    parameters: dict = None
     error_capsules: list[Error] = field(default_factory=lambda: [])
     response: Response = None
 
