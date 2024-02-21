@@ -162,7 +162,8 @@ class TestWebRunner(TestCase):
         self.__mock_handler2: RequestHandler = Mock()
         self.__mock_handler3: RequestHandler = Mock()
         self.__sut = WebRunner(request_handlers=[self.__mock_handler1, self.__mock_handler2, self.__mock_handler3],
-                               serializer=JsonSnakeToCamelSerializer())
+                               serializer=JsonSnakeToCamelSerializer(),
+                               logger=Mock())
 
     def test_run_basic(self):
         # arrange
@@ -174,7 +175,7 @@ class TestWebRunner(TestCase):
             "this_is_a_message": "message"
         }, status_code=200))
         self.__mock_handler1.run = MagicMock(return_value=context)
-        self.__mock_handler1.route_key = MagicMock(return_value="GET /test/path1")
+        self.__mock_handler1.route_key = "GET /test/path1"
 
         # act
         response = self.__sut.run(event=event)
@@ -200,11 +201,11 @@ class TestWebRunner(TestCase):
     def test_run_basic_with_no_route_match(self):
         # arrange
         event = {
-            "roueyKey": "POST /test/path1",
+            "routeKey": "POST /test/path1",
             "body": "{\"testField\": \"testValue\"}"
         }
         self.__mock_handler1.run = MagicMock()
-        self.__mock_handler1.route_key = MagicMock(return_value="GET /test/path1")
+        self.__mock_handler1.route_key = "GET /test/path1"
 
         # act
         response = self.__sut.run(event=event)
@@ -223,11 +224,11 @@ class TestWebRunner(TestCase):
     def test_run_basic_with_exception(self):
         # arrange
         event = {
-            "roueyKey": "GET /test/path1",
+            "routeKey": "GET /test/path1",
             "body": "{\"testField\": \"testValue\"}"
         }
         self.__mock_handler1.run = MagicMock(return_value=Exception("test exception"))
-        self.__mock_handler1.route_key = MagicMock(return_value="GET /test/path1")
+        self.__mock_handler1.route_key = "GET /test/path1"
 
         # act
         response = self.__sut.run(event=event)

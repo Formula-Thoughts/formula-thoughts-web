@@ -1,7 +1,7 @@
 import json
 from abc import ABC
 
-from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Serializer
+from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Serializer, Logger
 from src.application import CommandPipeline
 
 
@@ -9,15 +9,36 @@ class WebRunner:
 
     def __init__(self,
                  request_handlers: list[RequestHandler],
-                 serializer: Serializer):
+                 serializer: Serializer,
+                 logger: Logger):
+        self.__logger = logger
         self.__serializer = serializer
         self.__request_handlers = request_handlers
 
     def run(self, event) -> dict:
-        # request_handler_matches = filter(lambda x: x.route_key == event['routeKey'], self.__request_handlers)
-        # if request_handler_matches ==
-        # context: ApplicationContext = request_handler_matches[0](event=event)
-        ...
+        headers = {"Content-Type": "application/json"}
+        request_handler_matches = list(filter(lambda x: x.route_key == event['routeKey'], self.__request_handlers))
+        if len(request_handler_matches) == 0:
+            return {
+                "headers": headers,
+                "body": self.__serializer.serialize(data={"message": f"route {event['routeKey']} not found"}),
+                "statusCode": 404
+            }
+        try:
+            context: ApplicationContext = request_handler_matches[0].run(event=event)
+            return {
+                "headers": headers,
+                "body": self.__serializer.serialize(data=context.response.body),
+                "statusCode": context.response.status_code
+            }
+        except Exception as e:
+            self.__logger.log_error("exception occurred")
+            return {
+                "headers": headers,
+                "body": self.__serializer.serialize(data={"message": f"internal server error :("}),
+                "statusCode": 500
+            }
+
 
 
 class RequestHandlerBase(ABC):
