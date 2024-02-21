@@ -209,6 +209,26 @@ class TestWebRunner(TestCase):
         with self.subTest(msg="assert headers match"):
             self.assertEqual(response['headers'], {"Content-Type": "application/json"})
 
+    def test_run_without_response(self):
+        # arrange
+        event = {
+            "routeKey": "GET /test/path1",
+            "body": "{\"testField\": \"testValue\"}"
+        }
+        context = ApplicationContext(response=Response[TestResponse]())
+        self.__mock_handler1.run = MagicMock(return_value=context)
+        self.__mock_handler1.route_key = "GET /test/path1"
+
+        # act
+        response = self.__sut.run(event=event)
+
+        # assert
+        with self.subTest(msg="body matches"):
+            self.assertEqual(response['body'], None)
+
+        with self.subTest(msg="status code matches"):
+            self.assertEqual(response['statusCode'], 201)
+
     def test_run_basic_with_no_route_match(self):
         # arrange
         event = {
