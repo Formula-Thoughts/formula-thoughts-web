@@ -184,7 +184,7 @@ class TestWebRunner(TestCase):
             "routeKey": "GET /test/path1",
             "body": "{\"testField\": \"testValue\"}"
         }
-        context = ApplicationContext(response=Response[TestResponse](body=TestResponse(test_prop=1), status_code=200))
+        context = ApplicationContext(response=Response[TestResponse](body=TestResponse(test_prop=1)))
         self.__mock_handler1.run = MagicMock(return_value=context)
         self.__mock_handler1.route_key = "GET /test/path1"
 
@@ -201,7 +201,7 @@ class TestWebRunner(TestCase):
 
         # assert
         with self.subTest(msg="body matches"):
-            self.assertEqual(response['body'], "{\"testProp\": \"1\"}")
+            self.assertEqual(response['body'], "{\"testProp\": 1}")
 
         with self.subTest(msg="status code matches"):
             self.assertEqual(response['statusCode'], 200)

@@ -65,7 +65,7 @@ class TopLevelSequenceRunner:
             if any(context.error_capsules):
                 error = context.error_capsules[-1]
                 self.__logger.log_error(f"error found in error capsule {type(error).__name__}")
-                context.response.body = {"message": error.msg}
+                context.response.body = error
                 self.__logger.log_error(f"middleware SHORTED!")
                 break
             self.__logger.log_debug(f"end middleware {name}")

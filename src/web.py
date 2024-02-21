@@ -4,6 +4,16 @@ from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler
 from src.application import TopLevelSequenceRunner
 
 
+class ResponseMapping:
+
+    def __init__(self):
+        self.__mappings = {}
+
+    def add_mapping(self):
+        ...
+
+
+
 class WebRunner:
 
     def __init__(self,
@@ -27,8 +37,8 @@ class WebRunner:
             context: ApplicationContext = request_handler_matches[0].run(event=event)
             body = None
             status_code = 204
-            if context.body is not None:
-                body = self.__serializer.serialize(data=context.response.body)
+            if context.response.body is not None:
+                body = self.__serializer.serialize(data=context.response.body.__dict__)
             return {
                 "headers": headers,
                 "body": body,
