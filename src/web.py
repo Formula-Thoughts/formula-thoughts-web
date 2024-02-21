@@ -71,7 +71,7 @@ class RequestHandlerBase(ABC):
             pass
         if 'body' in event:
             try:
-                json_body = json.loads(event['body'])
+                json_body = self.__deserializer.deserialize(event['body'])
                 body = json_body
             except ValueError:
                 body = event['body']

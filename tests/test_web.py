@@ -79,7 +79,7 @@ class TestRequestHandler(TestCase):
         # assert
         with self.subTest(msg="assert context was built correctly"):
             context: ApplicationContext = context_captor.arg
-            self.assertEqual(context.body, {"field1": "value1", "field2": 2.45, "camel_case_field": "camelCase"})
+            self.assertEqual(context.body, {"field_1": "value1", "field_2": 2.45, "camel_case_field": "camelCase"})
 
     def test_handle_request_with_string_body(self):
         # arrange
