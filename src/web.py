@@ -25,10 +25,14 @@ class WebRunner:
             }
         try:
             context: ApplicationContext = request_handler_matches[0].run(event=event)
+            body = None
+            status_code = 204
+            if context.body is not None:
+                body = self.__serializer.serialize(data=context.response.body)
             return {
                 "headers": headers,
-                "body": self.__serializer.serialize(data=context.response.body),
-                "statusCode": context.response.status_code
+                "body": body,
+                "statusCode": status_code
             }
         except Exception as e:
             self.__logger.log_error("exception occurred")

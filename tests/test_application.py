@@ -118,7 +118,6 @@ class TestSequenceBuilder(TestCase):
         # assert
         with self.subTest("context is updated"):
             self.assertEqual(context.response.body, {"message": "error"})
-            self.assertEqual(context.response.status_code, 403)
 
 
 class TestComplexSequenceBuilder(TestCase):
