@@ -1,7 +1,7 @@
 import json
 from abc import ABC
 
-from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Serializer, Logger
+from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Serializer, Logger, Deserializer
 from src.application import CommandPipeline
 
 
@@ -40,12 +40,13 @@ class WebRunner:
             }
 
 
-
 class RequestHandlerBase(ABC):
 
     def __init__(self, route_key: str,
                  sequence: SequenceBuilder,
-                 command_pipeline: CommandPipeline):
+                 command_pipeline: CommandPipeline,
+                 deserializer: Deserializer):
+        self.__deserializer = deserializer
         self.__command_pipeline = command_pipeline
         self.__route_key = route_key
         self.__sequence = sequence

@@ -3,7 +3,7 @@ from unittest.mock import Mock, MagicMock
 
 from callee import Captor, Any
 
-from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Response
+from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Response, Deserializer
 from src.application import CommandPipeline
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
 from src.web import RequestHandlerBase, WebRunner
@@ -11,8 +11,13 @@ from src.web import RequestHandlerBase, WebRunner
 
 class ExampleRequestHandler(RequestHandlerBase):
 
-    def __init__(self, mock_sequence: SequenceBuilder, command_pipeline: CommandPipeline):
-        super().__init__("GET /test/route", mock_sequence, command_pipeline)
+    def __init__(self, mock_sequence: SequenceBuilder,
+                 command_pipeline: CommandPipeline,
+                 deserializer: Deserializer):
+        super().__init__("GET /test/route",
+                         mock_sequence,
+                         command_pipeline,
+                         deserializer)
 
 
 class TestRequestHandler(TestCase):
@@ -20,7 +25,9 @@ class TestRequestHandler(TestCase):
     def setUp(self):
         self.__mock_sequence: SequenceBuilder = Mock()
         self.__mock_pipeline: CommandPipeline = Mock()
-        self.__sut = ExampleRequestHandler(mock_sequence=self.__mock_sequence, command_pipeline=self.__mock_pipeline)
+        self.__sut = ExampleRequestHandler(mock_sequence=self.__mock_sequence,
+                                           command_pipeline=self.__mock_pipeline,
+                                           deserializer=JsonCamelToSnakeDeserializer())
 
     def test_handle_basic_request(self):
         # arrange
@@ -44,11 +51,11 @@ class TestRequestHandler(TestCase):
 
         # assert
         with self.subTest(msg="assert context was built correctly"):
-            context: ApplicationContext = context_captor.arg
-            self.assertEqual(context.body, None)
-            self.assertEqual(context.auth_user_id, None)
-            self.assertEqual(context.parameters, {})
-            self.assertEqual(context.error_capsules, [])
+            captured_context: ApplicationContext = context_captor.arg
+            self.assertEqual(captured_context.body, None)
+            self.assertEqual(captured_context.auth_user_id, None)
+            self.assertEqual(captured_context.parameters, {})
+            self.assertEqual(captured_context.error_capsules, [])
 
         with self.subTest(msg="assert context was returned"):
             self.assertEqual(context, context_captor.arg)
@@ -58,7 +65,7 @@ class TestRequestHandler(TestCase):
         self.__mock_sequence.generate_sequence = MagicMock()
         self.__mock_pipeline.execute_commands = MagicMock()
         event = {
-            "body": "{\"field1\": \"value1\", \"field2\": 2.45}"
+            "body": "{\"field1\": \"value1\", \"field2\": 2.45, \"camelCaseField\": \"camelCase\"}"
         }
 
         # act
@@ -72,7 +79,7 @@ class TestRequestHandler(TestCase):
         # assert
         with self.subTest(msg="assert context was built correctly"):
             context: ApplicationContext = context_captor.arg
-            self.assertEqual(context.body, {"field1": "value1", "field2": 2.45})
+            self.assertEqual(context.body, {"field1": "value1", "field2": 2.45, "camel_case_field": "camelCase"})
 
     def test_handle_request_with_string_body(self):
         # arrange
