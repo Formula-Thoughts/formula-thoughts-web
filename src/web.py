@@ -4,14 +4,16 @@ from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler
 from src.application import TopLevelSequenceRunner
 
 
-class ResponseMapping:
+class StatusCodeMapping:
 
     def __init__(self):
         self.__mappings = {}
 
-    def add_mapping(self):
-        ...
+    def add_mapping(self, type, status_code: int) -> None:
+        self.__mappings[type.__module__+type.__name__] = status_code
 
+    def get_mappings(self, response) -> int:
+        return self.__mappings[type(response).__module__+type(response).__name__]
 
 
 class WebRunner:
