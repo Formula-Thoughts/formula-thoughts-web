@@ -32,7 +32,7 @@ class Command(Protocol):
 
 class RequestHandler(Protocol):
 
-    def run(self, event: dict) -> None:
+    def run(self, event: dict) -> ApplicationContext:
         ...
 
     @property

@@ -1,22 +1,32 @@
 from typing import Protocol
 
+import punq
 from simple_injection import ServiceCollection
 
-from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilder
+from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilder, Serializer, Deserializer, \
+    RequestHandler
 from src.application import FluentSequenceBuilder, CommandPipeline
-from src.web import RequestHandlerBase
+from src.ioc import register_web
+from src.web import RequestHandlerBase, WebRunner
+from tests import DummyLogger
 
 
-def register_dependencies():
-    ioc = ServiceCollection()
-    ioc.add_singleton(BakingService)
-    ioc.add_singleton(CreateBreadCommand, CreateWheatBreadCommand)
-    ioc.add_singleton(PublishBreadNotificationCommand, PublishWheatBreadNotificationCommand)
-    ioc.add_singleton(CreateBreadSequenceBuilder, CreateWheatBreadSequenceBuilder)
+def register_dependencies(services: punq.Container) -> None:
+    services.register(BakingService)
+    services.register(CreateBreadCommand, CreateWheatBreadCommand)
+    services.register(PublishBreadNotificationCommand, PublishWheatBreadNotificationCommand)
+    services.register(CreateBreadSequenceBuilder, CreateWheatBreadSequenceBuilder)
+    services.register(RequestHandler, CreateBreadRequestHandlerInternal)
+    services.register(RequestHandler, CreateBreadRequestHandler)
+    services.register(Logger, DummyLogger)
 
 
 def handler(event, context):
-    register_dependencies()
+    ioc = punq.Container()
+    register_web(services=ioc)
+    register_dependencies(services=ioc)
+    web_runner = ioc.resolve(service_key=WebRunner)
+    web_runner.run(event=event)
 
 
 class BakingService:
@@ -74,5 +84,25 @@ class CreateWheatBreadSequenceBuilder(FluentSequenceBuilder):
 
 class CreateBreadRequestHandler(RequestHandlerBase):
 
-    def __init__(self, sequence: CreateWheatBreadSequenceBuilder, command_pipeline: CommandPipeline):
-        super().__init__("POST /bake-bread", sequence, command_pipeline)
+    def __init__(self, sequence: CreateBreadSequenceBuilder,
+                 command_pipeline: CommandPipeline,
+                 deserializer: Deserializer):
+        super().__init__("POST /bake-bread",
+                         sequence,
+                         command_pipeline,
+                         deserializer)
+
+
+class CreateBreadRequestHandlerInternal(RequestHandlerBase):
+
+    def __init__(self, sequence: CreateBreadSequenceBuilder,
+                 command_pipeline: CommandPipeline,
+                 deserializer: Deserializer):
+        super().__init__("POST /bread",
+                         sequence,
+                         command_pipeline,
+                         deserializer)
+
+handler(event={
+    "routeKey": "POST /bake-bread"
+}, context={})

@@ -1,4 +1,3 @@
-import json
 from abc import ABC
 
 from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Serializer, Logger, Deserializer
