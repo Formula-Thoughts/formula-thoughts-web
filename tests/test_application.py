@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from src.application import Error, FluentSequenceBuilder, ApplicationContext, CommandPipeline, Response, \
+from src.application import Error, FluentSequenceBuilder, ApplicationContext, TopLevelSequenceRunner, Response, \
     Command
 from tests import logger_factory
 
@@ -90,26 +90,26 @@ class TestSequenceBuilder(TestCase):
 
     def test_sequence(self):
         # arrange
-        middleware = CommandPipeline(logger=logger_factory())
+        middleware = TopLevelSequenceRunner(logger=logger_factory())
         sut = DummyNested2SequenceBuilder()
         context = ApplicationContext(body={"trail": []}, response=Response())
 
         # act
-        middleware.execute_commands(context=context,
-                                    sequence=sut)
+        middleware.run(context=context,
+                       top_level_sequence=sut)
 
         # assert
         self.assertEqual(context.body["trail"], ["command 3", "command 4", "command 5"])
 
     def test_sequence_with_short_circuit(self):
         # arrange
-        middleware = CommandPipeline(logger=logger_factory())
+        middleware = TopLevelSequenceRunner(logger=logger_factory())
         sut = DummyNestedErrorSequenceBuilder()
         context = ApplicationContext(body={"trail": []}, response=Response())
 
         # act
-        middleware.execute_commands(context=context,
-                                    sequence=sut)
+        middleware.run(context=context,
+                       top_level_sequence=sut)
 
         # assert
         with self.subTest("invocations match"):
@@ -126,13 +126,13 @@ class TestComplexSequenceBuilder(TestCase):
     def setUp(self) -> None:
         self.__sut = DummySequenceBuilder(sequence=DummyNestedSequenceBuilder(
                                               sequence=DummyNested2SequenceBuilder()))
-        self.__middleware = CommandPipeline(logger=logger_factory())
+        self.__middleware = TopLevelSequenceRunner(logger=logger_factory())
 
     def test_build_and_run_sequence(self):
         # act
         context = ApplicationContext(body={"trail": []}, response=Response())
-        self.__middleware.execute_commands(context=context,
-                                           sequence=self.__sut)
+        self.__middleware.run(context=context,
+                              top_level_sequence=self.__sut)
 
         # assert
         with self.subTest(msg="invocations match list"):

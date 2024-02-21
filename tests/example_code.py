@@ -5,7 +5,7 @@ from simple_injection import ServiceCollection
 
 from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilder, Serializer, Deserializer, \
     RequestHandler
-from src.application import FluentSequenceBuilder, CommandPipeline
+from src.application import FluentSequenceBuilder, TopLevelSequenceRunner
 from src.ioc import register_web
 from src.web import RequestHandlerBase, WebRunner
 from tests import DummyLogger
@@ -85,7 +85,7 @@ class CreateWheatBreadSequenceBuilder(FluentSequenceBuilder):
 class CreateBreadRequestHandler(RequestHandlerBase):
 
     def __init__(self, sequence: CreateBreadSequenceBuilder,
-                 command_pipeline: CommandPipeline,
+                 command_pipeline: TopLevelSequenceRunner,
                  deserializer: Deserializer):
         super().__init__("POST /bake-bread",
                          sequence,
@@ -96,7 +96,7 @@ class CreateBreadRequestHandler(RequestHandlerBase):
 class CreateBreadRequestHandlerInternal(RequestHandlerBase):
 
     def __init__(self, sequence: CreateBreadSequenceBuilder,
-                 command_pipeline: CommandPipeline,
+                 command_pipeline: TopLevelSequenceRunner,
                  deserializer: Deserializer):
         super().__init__("POST /bread",
                          sequence,

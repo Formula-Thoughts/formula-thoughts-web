@@ -1,10 +1,11 @@
+from dataclasses import dataclass
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock
 
 from callee import Captor, Any
 
 from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Response, Deserializer
-from src.application import CommandPipeline
+from src.application import TopLevelSequenceRunner
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
 from src.web import RequestHandlerBase, WebRunner
 
@@ -12,7 +13,7 @@ from src.web import RequestHandlerBase, WebRunner
 class ExampleRequestHandler(RequestHandlerBase):
 
     def __init__(self, mock_sequence: SequenceBuilder,
-                 command_pipeline: CommandPipeline,
+                 command_pipeline: TopLevelSequenceRunner,
                  deserializer: Deserializer):
         super().__init__("GET /test/route",
                          mock_sequence,
@@ -24,7 +25,7 @@ class TestRequestHandler(TestCase):
 
     def setUp(self):
         self.__mock_sequence: SequenceBuilder = Mock()
-        self.__mock_pipeline: CommandPipeline = Mock()
+        self.__mock_pipeline: TopLevelSequenceRunner = Mock()
         self.__sut = ExampleRequestHandler(mock_sequence=self.__mock_sequence,
                                            command_pipeline=self.__mock_pipeline,
                                            deserializer=JsonCamelToSnakeDeserializer())
@@ -32,7 +33,7 @@ class TestRequestHandler(TestCase):
     def test_handle_basic_request(self):
         # arrange
         self.__mock_sequence.generate_sequence = MagicMock()
-        self.__mock_pipeline.execute_commands = MagicMock()
+        self.__mock_pipeline.run = MagicMock()
         event = {}
 
         # act
@@ -42,12 +43,12 @@ class TestRequestHandler(TestCase):
 
         # assert
         with self.subTest(msg="assert pipeline was called once"):
-            self.__mock_pipeline.execute_commands.assert_called_once()
+            self.__mock_pipeline.run.assert_called_once()
 
         # assert
         with self.subTest(msg="assert pipeline was called was correct context and sequence"):
-            self.__mock_pipeline.execute_commands.assert_called_with(context=context_captor,
-                                                                     sequence=self.__mock_sequence)
+            self.__mock_pipeline.run.assert_called_with(context=context_captor,
+                                                        top_level_sequence=self.__mock_sequence)
 
         # assert
         with self.subTest(msg="assert context was built correctly"):
@@ -63,7 +64,7 @@ class TestRequestHandler(TestCase):
     def test_handle_request_with_json_body(self):
         # arrange
         self.__mock_sequence.generate_sequence = MagicMock()
-        self.__mock_pipeline.execute_commands = MagicMock()
+        self.__mock_pipeline.run = MagicMock()
         event = {
             "body": "{\"field1\": \"value1\", \"field2\": 2.45, \"camelCaseField\": \"camelCase\"}"
         }
@@ -74,7 +75,7 @@ class TestRequestHandler(TestCase):
         context_captor = Captor()
 
         with self.subTest(msg="assert pipeline was called was correct context and sequence"):
-            self.__mock_pipeline.execute_commands.assert_called_with(context=context_captor, sequence=Any())
+            self.__mock_pipeline.run.assert_called_with(context=context_captor, top_level_sequence=Any())
 
         # assert
         with self.subTest(msg="assert context was built correctly"):
@@ -84,7 +85,7 @@ class TestRequestHandler(TestCase):
     def test_handle_request_with_string_body(self):
         # arrange
         self.__mock_sequence.generate_sequence = MagicMock()
-        self.__mock_pipeline.execute_commands = MagicMock()
+        self.__mock_pipeline.run = MagicMock()
         event = {
             "body": "this is a test"
         }
@@ -95,7 +96,7 @@ class TestRequestHandler(TestCase):
         context_captor = Captor()
 
         with self.subTest(msg="assert pipeline was called was correct context and sequence"):
-            self.__mock_pipeline.execute_commands.assert_called_with(context=context_captor, sequence=Any())
+            self.__mock_pipeline.run.assert_called_with(context=context_captor, top_level_sequence=Any())
 
         # assert
         with self.subTest(msg="assert context was built correctly"):
@@ -105,7 +106,7 @@ class TestRequestHandler(TestCase):
     def test_handle_request_with_list_body(self):
         # arrange
         self.__mock_sequence.generate_sequence = MagicMock()
-        self.__mock_pipeline.execute_commands = MagicMock()
+        self.__mock_pipeline.run = MagicMock()
         event = {
             "body": "[\"1\", \"2\", \"3\"]"
         }
@@ -116,7 +117,7 @@ class TestRequestHandler(TestCase):
         context_captor = Captor()
 
         with self.subTest(msg="assert pipeline was called was correct context and sequence"):
-            self.__mock_pipeline.execute_commands.assert_called_with(context=context_captor, sequence=Any())
+            self.__mock_pipeline.run.assert_called_with(context=context_captor, top_level_sequence=Any())
 
         # assert
         with self.subTest(msg="assert context was built correctly"):
@@ -126,7 +127,7 @@ class TestRequestHandler(TestCase):
     def test_handle_request_with_auth_id(self):
         # arrange
         self.__mock_sequence.generate_sequence = MagicMock()
-        self.__mock_pipeline.execute_commands = MagicMock()
+        self.__mock_pipeline.run = MagicMock()
         event = {"requestContext": {"authorizer": {"jwt": {"claims": {"name": "bob132"}}}}}
 
         # act
@@ -135,7 +136,7 @@ class TestRequestHandler(TestCase):
         context_captor = Captor()
 
         with self.subTest(msg="assert pipeline was called was correct context and sequence"):
-            self.__mock_pipeline.execute_commands.assert_called_with(context=context_captor, sequence=Any())
+            self.__mock_pipeline.run.assert_called_with(context=context_captor, top_level_sequence=Any())
 
         # assert
         with self.subTest(msg="assert context was built correctly"):
@@ -145,7 +146,7 @@ class TestRequestHandler(TestCase):
     def test_handle_request_with_path_and_query_params(self):
         # arrange
         self.__mock_sequence.generate_sequence = MagicMock()
-        self.__mock_pipeline.execute_commands = MagicMock()
+        self.__mock_pipeline.run = MagicMock()
         event = {"pathParameters": {"path_param1": "value1", "path_param2": "value2"}, "queryStringParameters": {"path_param2": "value1", "path_param3": "value1", "path_param4": 4.2}}
 
         # act
@@ -154,12 +155,17 @@ class TestRequestHandler(TestCase):
         context_captor = Captor()
 
         with self.subTest(msg="assert pipeline was called was correct context and sequence"):
-            self.__mock_pipeline.execute_commands.assert_called_with(context=context_captor, sequence=Any())
+            self.__mock_pipeline.run.assert_called_with(context=context_captor, top_level_sequence=Any())
 
         # assert
         with self.subTest(msg="assert context was built correctly"):
             context: ApplicationContext = context_captor.arg
             self.assertEqual(context.parameters, {"path_param1": "value1", "path_param2": "value1", "path_param3": "value1", "path_param4": 4.2})
+
+
+@dataclass(unsafe_hash=True)
+class TestResponse:
+    test_prop: int = None
 
 
 class TestWebRunner(TestCase):
@@ -178,9 +184,7 @@ class TestWebRunner(TestCase):
             "routeKey": "GET /test/path1",
             "body": "{\"testField\": \"testValue\"}"
         }
-        context = ApplicationContext(response=Response(body={
-            "this_is_a_message": "message"
-        }, status_code=200))
+        context = ApplicationContext(response=Response[TestResponse](body=TestResponse(test_prop=1), status_code=200))
         self.__mock_handler1.run = MagicMock(return_value=context)
         self.__mock_handler1.route_key = "GET /test/path1"
 
@@ -197,7 +201,7 @@ class TestWebRunner(TestCase):
 
         # assert
         with self.subTest(msg="body matches"):
-            self.assertEqual(response['body'], "{\"thisIsAMessage\": \"message\"}")
+            self.assertEqual(response['body'], "{\"testProp\": \"1\"}")
 
         with self.subTest(msg="status code matches"):
             self.assertEqual(response['statusCode'], 200)

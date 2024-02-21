@@ -2,10 +2,12 @@ import typing
 from dataclasses import field, dataclass
 from typing import Protocol
 
+T = typing.TypeVar('T')
+
 
 @dataclass(unsafe_hash=True)
-class Response:
-    body: dict = None
+class Response(typing.Generic[T]):
+    body: T = None
     status_code: int = None
 
 

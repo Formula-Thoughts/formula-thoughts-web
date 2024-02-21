@@ -1,7 +1,7 @@
 from abc import ABC
 
 from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Serializer, Logger, Deserializer
-from src.application import CommandPipeline
+from src.application import TopLevelSequenceRunner
 
 
 class WebRunner:
@@ -43,7 +43,7 @@ class RequestHandlerBase(ABC):
 
     def __init__(self, route_key: str,
                  sequence: SequenceBuilder,
-                 command_pipeline: CommandPipeline,
+                 command_pipeline: TopLevelSequenceRunner,
                  deserializer: Deserializer):
         self.__deserializer = deserializer
         self.__command_pipeline = command_pipeline
@@ -78,8 +78,8 @@ class RequestHandlerBase(ABC):
                                      auth_user_id=auth_user_id,
                                      parameters=parameters,
                                      error_capsules=[])
-        self.__command_pipeline.execute_commands(context=context,
-                                                 sequence=self.__sequence)
+        self.__command_pipeline.run(context=context,
+                                    top_level_sequence=self.__sequence)
         return context
 
     @property

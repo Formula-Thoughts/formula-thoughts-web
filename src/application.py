@@ -43,14 +43,14 @@ class FluentSequenceBuilder(ABC):
         return list(map(lambda x: x[1], self.__components))
 
 
-class CommandPipeline:
+class TopLevelSequenceRunner:
 
     def __init__(self, logger: Logger):
         self.__logger = logger
 
-    def execute_commands(self, context: ApplicationContext,
-                         sequence: SequenceBuilder):
-        middleware = sequence.generate_sequence()
+    def run(self, context: ApplicationContext,
+            top_level_sequence: SequenceBuilder):
+        middleware = top_level_sequence.generate_sequence()
         for action in middleware:
             name = "anonymous"
             try:
