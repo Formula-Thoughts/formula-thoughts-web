@@ -7,7 +7,7 @@ from callee import Captor, Any
 from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Response, Deserializer
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
-from src.web import RequestHandlerBase, WebRunner
+from src.web import RequestHandlerBase, WebRunner, StatusCodeMapping
 
 
 class ExampleRequestHandler(RequestHandlerBase):
@@ -174,8 +174,10 @@ class TestWebRunner(TestCase):
         self.__mock_handler1: RequestHandler = Mock()
         self.__mock_handler2: RequestHandler = Mock()
         self.__mock_handler3: RequestHandler = Mock()
+        self.__status_code_mapping: StatusCodeMapping = Mock()
         self.__sut = WebRunner(request_handlers=[self.__mock_handler1, self.__mock_handler2, self.__mock_handler3],
                                serializer=JsonSnakeToCamelSerializer(),
+                               status_code_mappings=self.__status_code_mapping,
                                logger=Mock())
 
     def test_run_basic(self):
@@ -187,6 +189,7 @@ class TestWebRunner(TestCase):
         context = ApplicationContext(response=Response[TestResponse](body=TestResponse(test_prop=1)))
         self.__mock_handler1.run = MagicMock(return_value=context)
         self.__mock_handler1.route_key = "GET /test/path1"
+        self.__status_code_mapping.get_mappings = MagicMock(return_value=200)
 
         # act
         response = self.__sut.run(event=event)
@@ -227,7 +230,7 @@ class TestWebRunner(TestCase):
             self.assertEqual(response['body'], None)
 
         with self.subTest(msg="status code matches"):
-            self.assertEqual(response['statusCode'], 201)
+            self.assertEqual(response['statusCode'], 204)
 
     def test_run_basic_with_no_route_match(self):
         # arrange

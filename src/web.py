@@ -21,7 +21,9 @@ class WebRunner:
     def __init__(self,
                  request_handlers: list[RequestHandler],
                  serializer: Serializer,
+                 status_code_mappings: StatusCodeMapping,
                  logger: Logger):
+        self.__status_code_mappings = status_code_mappings
         self.__logger = logger
         self.__serializer = serializer
         self.__request_handlers = request_handlers
@@ -41,6 +43,7 @@ class WebRunner:
             status_code = 204
             if context.response.body is not None:
                 body = self.__serializer.serialize(data=context.response.body.__dict__)
+                status_code = self.__status_code_mappings.get_mappings(response=type(context.response.body))
             return {
                 "headers": headers,
                 "body": body,

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Protocol, Union
 
-from src.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext
+from src.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext, ErrorResponse
 
 SUBSEQUENCE = "subsequence"
 COMMAND = "command"
@@ -65,7 +65,7 @@ class TopLevelSequenceRunner:
             if any(context.error_capsules):
                 error = context.error_capsules[-1]
                 self.__logger.log_error(f"error found in error capsule {type(error).__name__}")
-                context.response.body = error
+                context.response = ErrorResponse(body=error)
                 self.__logger.log_error(f"middleware SHORTED!")
                 break
             self.__logger.log_debug(f"end middleware {name}")

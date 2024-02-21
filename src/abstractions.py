@@ -12,12 +12,17 @@ class Response(typing.Generic[T]):
 
 @dataclass(unsafe_hash=True)
 class Error:
-    msg: str = None
+    message: str = None
+
+
+@dataclass(unsafe_hash=True)
+class ErrorResponse(Response[Error]):
+    pass
 
 
 @dataclass(unsafe_hash=True)
 class ApplicationContext:
-    body: typing.Union[dict, str, list] = None
+    body: typing.Any = None
     auth_user_id: str = None
     parameters: dict = None
     error_capsules: list[Error] = field(default_factory=lambda: [])
