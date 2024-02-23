@@ -186,7 +186,7 @@ class TestWebRunner(TestCase):
             "routeKey": "GET /test/path1",
             "body": "{\"testField\": \"testValue\"}"
         }
-        context = ApplicationContext(response=Response[TestResponse](body=TestResponse(test_prop=1)))
+        context = ApplicationContext(response=TestResponse(test_prop=1))
         self.__mock_handler1.run = MagicMock(return_value=context)
         self.__mock_handler1.route_key = "GET /test/path1"
         self.__status_code_mapping.get_mappings = MagicMock(return_value=200)
@@ -218,7 +218,7 @@ class TestWebRunner(TestCase):
             "routeKey": "GET /test/path1",
             "body": "{\"testField\": \"testValue\"}"
         }
-        context = ApplicationContext(response=Response[TestResponse]())
+        context = ApplicationContext(response=None)
         self.__mock_handler1.run = MagicMock(return_value=context)
         self.__mock_handler1.route_key = "GET /test/path1"
 

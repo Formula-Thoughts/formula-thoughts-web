@@ -1,6 +1,7 @@
 from unittest import TestCase
 
-from src.application import Error, FluentSequenceBuilder, ApplicationContext, TopLevelSequenceRunner, Response, \
+from src.abstractions import Error
+from src.application import FluentSequenceBuilder, ApplicationContext, TopLevelSequenceRunner, \
     Command
 from tests import logger_factory
 
@@ -38,7 +39,7 @@ class Command5(Command):
 class CommandError(Command):
 
     def run(self, context: ApplicationContext):
-        context.error_capsules.append(Error(msg="error", status_code=403))
+        context.error_capsules.append(Error(message="error"))
 
 
 class DummyNestedErrorSequenceBuilder(FluentSequenceBuilder):
@@ -92,7 +93,7 @@ class TestSequenceBuilder(TestCase):
         # arrange
         middleware = TopLevelSequenceRunner(logger=logger_factory())
         sut = DummyNested2SequenceBuilder()
-        context = ApplicationContext(body={"trail": []}, response=Response())
+        context = ApplicationContext(body={"trail": []})
 
         # act
         middleware.run(context=context,
@@ -105,7 +106,7 @@ class TestSequenceBuilder(TestCase):
         # arrange
         middleware = TopLevelSequenceRunner(logger=logger_factory())
         sut = DummyNestedErrorSequenceBuilder()
-        context = ApplicationContext(body={"trail": []}, response=Response())
+        context = ApplicationContext(body={"trail": []})
 
         # act
         middleware.run(context=context,
@@ -129,7 +130,7 @@ class TestComplexSequenceBuilder(TestCase):
 
     def test_build_and_run_sequence(self):
         # act
-        context = ApplicationContext(body={"trail": []}, response=Response())
+        context = ApplicationContext(body={"trail": []})
         self.__middleware.run(context=context,
                               top_level_sequence=self.__sut)
 

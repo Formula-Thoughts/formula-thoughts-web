@@ -1,7 +1,59 @@
+import inspect
 import json
 import re
 import typing
 from enum import Enum
+
+from src.abstractions import LoggerType
+
+
+class LogSeverity(Enum):
+    ERROR = "ERROR"
+    EVENT = "EVENT"
+    WARNING = "WARNING"
+    INFO = "INFO"
+    DEBUG = "DEBUG"
+    TRACE = "TRACE"
+
+
+class JsonConsoleLogger(typing.Generic[LoggerType]):
+
+    def __init__(self):
+        self.__request_props = {}
+
+    def __log(self, _type: LogSeverity, message: str, properties: dict):
+        _class = LoggerType.__name__
+        _module = LoggerType.__module__
+        name = f"{_module}.{_class}"
+        message = {
+            "message": message,
+            "severity": str(_type),
+            "logger": name
+        }
+        log_message = {**message, **self.__request_props, **properties}
+        print(f"{json.dumps(log_message)}")
+
+    def add_global_properties(self, properties: dict):
+        self.__request_props = properties
+
+    def log_error(self, message: str, properties: dict = None):
+        self.__log(_type=LogSeverity.ERROR, message=message, properties=properties)
+
+    def log_exception(self, exception: Exception, properties: dict = None):
+        self.__log(_type=LogSeverity.ERROR, message=str(exception), properties=properties)
+
+    def log_info(self, message: str, properties: dict = None):
+        self.__log(_type=LogSeverity.INFO, message=message, properties=properties)
+
+    def log_event(self, message: str, properties: dict = None):
+        self.__log(_type=LogSeverity.EVENT, message=message, properties=properties)
+
+    def log_debug(self, message: str, properties: dict = None):
+        self.__log(_type=LogSeverity.DEBUG, message=message, properties=properties)
+
+    def log_trace(self, message: str, properties: dict = None):
+        self.__log(_type=LogSeverity.TRACE, message=message, properties=properties)
+
 
 
 def all_annotations(cls):
@@ -16,6 +68,10 @@ def all_annotations(cls):
 
 
 T = typing.TypeVar("T")
+
+
+class MappingException(Exception):
+    pass
 
 
 class ObjectMapper:
@@ -61,26 +117,29 @@ class ObjectMapper:
                                   map_callback=lambda x: x.__dict__)
 
     def __generic_map(self, _from, to, propValues, map_callback=lambda x: x):
-        new_dto = to()
-        dict_to = all_annotations(to)
-        print("START MAPPING")
-        print(f"all annotations from DTO {dict_to}")
-        print(f"all props from _from {propValues}")
-        for property, value in propValues:
-            if property in dict_to:
-                if bool(typing.get_type_hints(dict_to[property])):
-                    setattr(new_dto, property, map_callback(self.map(_from=value, to=dict_to[property])))
-                elif (typing.get_origin(dict_to[property]) is list and
-                     (bool(typing.get_type_hints(typing.get_args(dict_to[property])[0])))):
-                    collection = []
-                    sub_item_to = typing.get_args(dict_to[property])[0]
-                    for item in value:
-                        collection.append(map_callback(self.map(_from=item, to=sub_item_to)))
-                    setattr(new_dto, property, collection)
-                else:
-                    new_dto.__dict__[property] = value
-        print(f"__generic_map from {type(_from)} {to} and mapped {_from} out -> {new_dto}")
-        return map_callback(new_dto)
+        try:
+            new_dto = to()
+            dict_to = all_annotations(to)
+            print("START MAPPING")
+            print(f"all annotations from DTO {dict_to}")
+            print(f"all props from _from {propValues}")
+            for property, value in propValues:
+                if property in dict_to:
+                    if bool(typing.get_type_hints(dict_to[property])):
+                        setattr(new_dto, property, map_callback(self.map(_from=value, to=dict_to[property])))
+                    elif (typing.get_origin(dict_to[property]) is list and
+                         (bool(typing.get_type_hints(typing.get_args(dict_to[property])[0])))):
+                        collection = []
+                        sub_item_to = typing.get_args(dict_to[property])[0]
+                        for item in value:
+                            collection.append(map_callback(self.map(_from=item, to=sub_item_to)))
+                        setattr(new_dto, property, collection)
+                    else:
+                        new_dto.__dict__[property] = value
+            print(f"__generic_map from {type(_from)} {to} and mapped {_from} out -> {new_dto}")
+            return map_callback(new_dto)
+        except Exception as e:
+            raise MappingException(str(e))
 
 
 class JsonSnakeToCamelSerializer:

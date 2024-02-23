@@ -1,18 +1,24 @@
 class DummyLogger:
 
-    def log_error(self, message: str):
+    def add_global_properties(self, properties: dict):
         ...
 
-    def log_exception(self, exception: Exception):
+    def log_error(self, message: str, properties: dict = None):
         ...
 
-    def log_info(self, message: str):
+    def log_exception(self, exception: Exception, properties: dict = None):
         ...
 
-    def log_debug(self, message: str):
+    def log_event(self, message: str, properties: dict = None):
         ...
 
-    def log_trace(self, message: str):
+    def log_info(self, message: str, properties: dict = None):
+        ...
+
+    def log_debug(self, message: str, properties: dict = None):
+        ...
+
+    def log_trace(self, message: str, properties: dict = None):
         ...
 
 

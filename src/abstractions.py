@@ -2,13 +2,6 @@ import typing
 from dataclasses import field, dataclass
 from typing import Protocol
 
-T = typing.TypeVar('T')
-
-
-@dataclass(unsafe_hash=True)
-class Response(typing.Generic[T]):
-    body: T = None
-
 
 @dataclass(unsafe_hash=True)
 class Error:
@@ -16,17 +9,12 @@ class Error:
 
 
 @dataclass(unsafe_hash=True)
-class ErrorResponse(Response[Error]):
-    pass
-
-
-@dataclass(unsafe_hash=True)
 class ApplicationContext:
-    body: typing.Any = None
+    body: dict = None
     auth_user_id: str = None
     parameters: dict = None
     error_capsules: list[Error] = field(default_factory=lambda: [])
-    response: Response = None
+    response: typing.Any = None
 
 
 class Command(Protocol):
@@ -69,19 +57,28 @@ class Deserializer(Protocol):
         ...
 
 
-class Logger(Protocol):
+LoggerType = typing.TypeVar('LoggerType')
 
-    def log_error(self, message: str):
+
+class Logger(Protocol[LoggerType]):
+
+    def add_global_properties(self, properties: dict):
         ...
 
-    def log_exception(self, exception: Exception):
+    def log_error(self, message: str, properties: dict = None):
         ...
 
-    def log_info(self, message: str):
+    def log_exception(self, exception: Exception, properties: dict = None):
         ...
 
-    def log_debug(self, message: str):
+    def log_info(self, message: str, properties: dict = None):
         ...
 
-    def log_trace(self, message: str):
+    def log_event(self, message: str, properties: dict = None):
+        ...
+
+    def log_debug(self, message: str, properties: dict = None):
+        ...
+
+    def log_trace(self, message: str, properties: dict = None):
         ...
