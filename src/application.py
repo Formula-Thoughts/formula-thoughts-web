@@ -57,7 +57,8 @@ class TopLevelSequenceRunner:
                 name = f"{inspect.getmodule(action).__name__}.{action.__name__}"
             except Exception:
                 ...
-            self.__logger.log_debug(f"begin middleware {name}")
+            self.__logger.log_event(properties={"action": name})
+            self.__logger.log_info(f"begin command {name}")
             self.__logger.log_trace(f"request {context.body}")
             self.__logger.log_trace(f"response {context.response.body}")
             action.run(context)
@@ -68,4 +69,4 @@ class TopLevelSequenceRunner:
                 context.response = error
                 self.__logger.log_error(f"middleware SHORTED!")
                 break
-            self.__logger.log_debug(f"end middleware {name}")
+            self.__logger.log_info(f"end command {name}")

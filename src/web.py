@@ -50,7 +50,7 @@ class WebRunner:
                 "statusCode": status_code
             }
         except Exception as e:
-            self.__logger.log_error("exception occurred")
+            self.__logger.log_exception(exception=e)
             return {
                 "headers": headers,
                 "body": self.__serializer.serialize(data={"message": f"internal server error :("}),
