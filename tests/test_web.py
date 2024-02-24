@@ -4,7 +4,7 @@ from unittest.mock import Mock, MagicMock
 
 from callee import Captor, Any
 
-from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Response, Deserializer
+from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Deserializer
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
 from src.web import RequestHandlerBase, WebRunner, StatusCodeMapping

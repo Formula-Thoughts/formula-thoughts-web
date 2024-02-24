@@ -4,8 +4,6 @@ import re
 import typing
 from enum import Enum
 
-from src.abstractions import LoggerType
-
 
 class LogSeverity(Enum):
     ERROR = "ERROR"
@@ -16,19 +14,27 @@ class LogSeverity(Enum):
     TRACE = "TRACE"
 
 
-class JsonConsoleLogger(typing.Generic[LoggerType]):
+class JsonConsoleLogger:
 
     def __init__(self):
         self.__request_props = {}
 
     def __log(self, _type: LogSeverity, message: str, properties: dict):
-        _class = LoggerType.__name__
-        _module = LoggerType.__module__
-        name = f"{_module}.{_class}"
+        if properties is None:
+            properties = {}
+        _function = inspect.stack()[2].function
+        _class = "None"
+        _module = "Unknown"
+        try:
+            _class = type(inspect.stack()[2].frame.f_locals['self']).__name__
+            _module = type(inspect.stack()[2].frame.f_locals['self']).__module__
+        except:
+            ...
+        name = f"{_module}.{_class}.{_function}"
         message = {
             "message": message,
             "severity": str(_type),
-            "logger": name
+            "location": name
         }
         log_message = {**message, **self.__request_props, **properties}
         print(f"{json.dumps(log_message)}")

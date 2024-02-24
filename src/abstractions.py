@@ -57,10 +57,7 @@ class Deserializer(Protocol):
         ...
 
 
-LoggerType = typing.TypeVar('LoggerType')
-
-
-class Logger(Protocol[LoggerType]):
+class Logger(Protocol):
 
     def add_global_properties(self, properties: dict):
         ...

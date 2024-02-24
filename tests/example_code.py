@@ -1,3 +1,4 @@
+import json
 import uuid
 from dataclasses import dataclass
 from typing import Protocol
@@ -13,13 +14,13 @@ from tests import DummyLogger
 
 def register_dependencies(services: Container) -> None:
     services.register(BakingService)
+    services.register(NotificationService)
     services.register(CreateBreadRequestCommand, CreateWhiteBreadRequestCommand)
     services.register(ValidateBreadRequestCommand, ValidateWhiteBreadRequestCommand)
     services.register(CreateBreadCommand, CreateWhiteBreadCommand)
     services.register(PublishBreadNotificationCommand, PublishWhiteBreadNotificationCommand)
     services.register(CreateBreadSequenceBuilder, CreateWhiteBreadSequenceBuilder)
     services.register(RequestHandler, CreateBreadRequestHandler)
-    services.register(Logger, DummyLogger)
     services.register(CreateBreadState)
 
 
@@ -46,11 +47,36 @@ class BreadNotification:
     baking_id: str = None
 
 
-@dataclass(unsafe_hash=True)
 class CreateBreadState:
-    bread_request: BreadModel = None
-    baking_id: str = None
-    previous_bakes: list[str] = None
+
+    def __init__(self):
+        self.__bread_request: BreadModel = None
+        self.__baking_id: str = None
+        self.__previous_bakes: list[str] = None
+
+    @property
+    def bread_request(self) -> BreadModel:
+        return self.__bread_request
+
+    @bread_request.setter
+    def bread_request(self, value: BreadModel) -> None:
+        self.__bread_request = value
+
+    @property
+    def baking_id(self) -> str:
+        return self.__baking_id
+
+    @baking_id.setter
+    def baking_id(self, value: str) -> None:
+        self.__baking_id = value
+
+    @property
+    def previous_bakes(self) -> list[str]:
+        return self.__previous_bakes
+
+    @previous_bakes.setter
+    def previous_bakes(self, value: list[str]) -> None:
+        self.__previous_bakes = value
 
 
 class BakingService:
@@ -217,11 +243,11 @@ class CreateBreadRequestHandler(RequestHandlerBase):
 
 handler(event={
     "routeKey": "POST /bake-bread",
-    "body": {
+    "body": json.dumps({
         "temperature": 14.5,
         "yeast_g": 24.5,
         "flour_g": 546.4,
         "water_ml": 0.1,
         "olive_oil_ml": 0.2
-    }
+    })
 }, context={})

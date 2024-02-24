@@ -41,9 +41,9 @@ class WebRunner:
             context: ApplicationContext = request_handler_matches[0].run(event=event)
             body = None
             status_code = 204
-            if context.response.body is not None:
-                body = self.__serializer.serialize(data=context.response.body.__dict__)
-                status_code = self.__status_code_mappings.get_mappings(response=type(context.response.body))
+            if context.response is not None:
+                body = self.__serializer.serialize(data=context.response.__dict__)
+                status_code = self.__status_code_mappings.get_mappings(response=type(context.response))
             return {
                 "headers": headers,
                 "body": body,

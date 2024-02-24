@@ -1,9 +1,7 @@
 import inspect
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Protocol, Union
 
-from src.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext, ErrorResponse
+from src.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext
 
 SUBSEQUENCE = "subsequence"
 COMMAND = "command"
@@ -57,10 +55,10 @@ class TopLevelSequenceRunner:
                 name = f"{inspect.getmodule(action).__name__}.{action.__name__}"
             except Exception:
                 ...
-            self.__logger.log_event(properties={"action": name})
+            self.__logger.log_event(message="middleware event", properties={"action": name})
             self.__logger.log_info(f"begin command {name}")
             self.__logger.log_trace(f"request {context.body}")
-            self.__logger.log_trace(f"response {context.response.body}")
+            self.__logger.log_trace(f"response {context.response}")
             action.run(context)
             # for now, we throw on first error in top level sequence
             if any(context.error_capsules):

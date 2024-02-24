@@ -1,10 +1,10 @@
-from typing import TypeVar, Type
+from typing import TypeVar, Type, Any
 
 import punq
 
-from src.abstractions import Serializer, Deserializer
+from src.abstractions import Serializer, Deserializer, Logger
 from src.application import TopLevelSequenceRunner
-from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper
+from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper, JsonConsoleLogger
 from src.web import WebRunner, StatusCodeMapping
 
 
@@ -18,8 +18,9 @@ class Container:
 
     def register(self, service: Type[T], implementation: Type[T] = None, scope: punq.Scope = punq.Scope.singleton) -> 'Container':
         if implementation is None:
-            self.__container.register(service, scope=scope)
-        self.__container.register(service, implementation, scope=scope)
+            self.__container.register(service=service, factory=punq.empty, scope=scope)
+        else:
+            self.__container.register(service, implementation, scope=scope)
         return self
 
     def resolve(self, service: Type[T]) -> T:
@@ -27,12 +28,13 @@ class Container:
 
 
 def register_web(services: Container):
-    services.register(Serializer, JsonSnakeToCamelSerializer)
-    services.register(Deserializer, JsonCamelToSnakeDeserializer)
-    services.register(TopLevelSequenceRunner)
-    services.register(WebRunner)
-    services.register(ObjectMapper)
-    services.register(StatusCodeMapping, scope=punq.Scope.singleton)
+    services.register(service=Serializer, implementation=JsonSnakeToCamelSerializer)
+    services.register(service=Deserializer, implementation=JsonCamelToSnakeDeserializer)
+    services.register(service=TopLevelSequenceRunner)
+    services.register(service=WebRunner)
+    services.register(service=ObjectMapper)
+    services.register(service=Logger, implementation=JsonConsoleLogger)
+    services.register(service=StatusCodeMapping, scope=punq.Scope.singleton)
 
 
 def add_status_code_mappings(services: punq.Container, mappings: dict):
