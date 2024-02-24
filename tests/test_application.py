@@ -91,12 +91,12 @@ class TestSequenceBuilder(TestCase):
 
     def test_sequence(self):
         # arrange
-        middleware = TopLevelSequenceRunner(logger=logger_factory())
+        top_level_sequence_runner = TopLevelSequenceRunner(logger=logger_factory())
         sut = DummyNested2SequenceBuilder()
         context = ApplicationContext(body={"trail": []})
 
         # act
-        middleware.run(context=context,
+        top_level_sequence_runner.run(context=context,
                        top_level_sequence=sut)
 
         # assert
@@ -104,12 +104,12 @@ class TestSequenceBuilder(TestCase):
 
     def test_sequence_with_short_circuit(self):
         # arrange
-        middleware = TopLevelSequenceRunner(logger=logger_factory())
+        top_level_sequence_runner = TopLevelSequenceRunner(logger=logger_factory())
         sut = DummyNestedErrorSequenceBuilder()
         context = ApplicationContext(body={"trail": []})
 
         # act
-        middleware.run(context=context,
+        top_level_sequence_runner.run(context=context,
                        top_level_sequence=sut)
 
         # assert
@@ -126,13 +126,13 @@ class TestComplexSequenceBuilder(TestCase):
     def setUp(self) -> None:
         self.__sut = DummySequenceBuilder(sequence=DummyNestedSequenceBuilder(
                                               sequence=DummyNested2SequenceBuilder()))
-        self.__middleware = TopLevelSequenceRunner(logger=logger_factory())
+        self.__top_level_sequence_runner = TopLevelSequenceRunner(logger=logger_factory())
 
     def test_build_and_run_sequence(self):
         # act
         context = ApplicationContext(body={"trail": []})
-        self.__middleware.run(context=context,
-                              top_level_sequence=self.__sut)
+        self.__top_level_sequence_runner.run(context=context,
+                                             top_level_sequence=self.__sut)
 
         # assert
         with self.subTest(msg="invocations match list"):

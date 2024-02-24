@@ -48,14 +48,14 @@ class TopLevelSequenceRunner:
 
     def run(self, context: ApplicationContext,
             top_level_sequence: SequenceBuilder):
-        middleware = top_level_sequence.generate_sequence()
-        for action in middleware:
+        commands = top_level_sequence.generate_sequence()
+        for action in commands:
             name = "anonymous"
             try:
                 name = f"{inspect.getmodule(action).__name__}.{action.__name__}"
             except Exception:
                 ...
-            self.__logger.log_event(message="middleware event", properties={"action": name})
+            self.__logger.log_event(message="command event", properties={"action": name})
             self.__logger.log_info(f"begin command {name}")
             self.__logger.log_trace(f"request {context.body}")
             self.__logger.log_trace(f"response {context.response}")
@@ -65,6 +65,6 @@ class TopLevelSequenceRunner:
                 error = context.error_capsules[-1]
                 self.__logger.log_error(f"error found in error capsule {type(error).__name__}")
                 context.response = error
-                self.__logger.log_error(f"middleware SHORTED!")
+                self.__logger.log_error(f"command pipeline SHORTED!")
                 break
             self.__logger.log_info(f"end command {name}")
