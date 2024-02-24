@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import Type
 
 from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Serializer, Logger, Deserializer
 from src.application import TopLevelSequenceRunner
@@ -9,11 +10,11 @@ class StatusCodeMapping:
     def __init__(self):
         self.__mappings = {}
 
-    def add_mapping(self, type, status_code: int) -> None:
-        self.__mappings[type.__module__+type.__name__] = status_code
+    def add_mapping(self, _type, status_code: int) -> None:
+        self.__mappings[f"{_type.__module__}.{_type.__name__}"] = status_code
 
-    def get_mappings(self, response) -> int:
-        return self.__mappings[type(response).__module__+type(response).__name__]
+    def get_mappings(self, response: Type) -> int:
+        return self.__mappings[f"{response.__module__}.{response.__name__}"]
 
 
 class WebRunner:

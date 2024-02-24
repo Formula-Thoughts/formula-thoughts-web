@@ -2,14 +2,16 @@ import json
 import uuid
 from dataclasses import dataclass
 from typing import Protocol
+from unittest import TestCase
 
 from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilder, Deserializer, \
     RequestHandler, Error
 from src.application import FluentSequenceBuilder, TopLevelSequenceRunner
-from src.crosscutting import ObjectMapper, MappingException
+from src.crosscutting import ObjectMapper, MappingException, JsonConsoleLogger
 from src.ioc import register_web, Container
 from src.web import RequestHandlerBase, WebRunner
-from tests import DummyLogger
+
+BAKING_ID = str(uuid.uuid4())
 
 
 def register_dependencies(services: Container) -> None:
@@ -21,15 +23,19 @@ def register_dependencies(services: Container) -> None:
     services.register(PublishBreadNotificationCommand, PublishWhiteBreadNotificationCommand)
     services.register(CreateBreadSequenceBuilder, CreateWhiteBreadSequenceBuilder)
     services.register(RequestHandler, CreateBreadRequestHandler)
+    services.register_status_code_mappings({
+        BreadResponse: 200,
+        BreadValidationError: 400
+    })
     services.register(CreateBreadState)
 
 
-def handler(event, context):
+def handler(event, context) -> dict:
     ioc = Container()
     register_web(services=ioc)
     register_dependencies(services=ioc)
     web_runner = ioc.resolve(service=WebRunner)
-    web_runner.run(event=event)
+    return web_runner.run(event=event)
 
 
 @dataclass(unsafe_hash=True)
@@ -86,7 +92,7 @@ class BakingService:
 
     def bake_bread(self, bread: BreadModel) -> str:
         self.__logger.log_info(message=f"baking bread at {bread.temperature} degrees")
-        return str(uuid.uuid4())
+        return BAKING_ID
 
 
 class NotificationService:
@@ -241,13 +247,31 @@ class CreateBreadRequestHandler(RequestHandlerBase):
                          deserializer)
 
 
-handler(event={
-    "routeKey": "POST /bake-bread",
-    "body": json.dumps({
-        "temperature": 14.5,
-        "yeast_g": 24.5,
-        "flour_g": 546.4,
-        "water_ml": 0.1,
-        "olive_oil_ml": 0.2
-    })
-}, context={})
+class TestExampleCode(TestCase):
+        
+    def test_run_handler(self):
+        # arrange & act
+        response = handler(event={"routeKey": "POST /bake-bread", "body": json.dumps({"temperature": 14.5, "yeast_g": 24.5, "flour_g": 546.4, "water_ml": 0.1, "olive_oil_ml": 0.2})}, context={})
+        
+        # assert
+        with self.subTest(msg="assert response is OK"):
+            self.assertEqual(response['statusCode'], 200)
+
+        # assert
+        with self.subTest(msg="assert body matches"):
+            self.assertEqual(response['body'], "{\"bakingId\": \""+BAKING_ID+"\"}")
+
+    def test_run_handler_when_there_is_error(self):
+        # arrange & act
+        response = handler(event={"routeKey": "POST /bake-bread", "body": json.dumps(
+            {"temperature": 0, "yeast_g": 24.5, "flour_g": 546.4, "water_ml": 0.1, "olive_oil_ml": 0.2})},
+                           context={})
+
+        # assert
+        with self.subTest(msg="assert response is bad request"):
+            self.assertEqual(response['statusCode'], 400)
+
+        # assert
+        with self.subTest(msg="assert body matches"):
+            self.assertEqual(response['body'], "{\"message\": \"temperature has to be above 0c\"}")
+        
