@@ -7,10 +7,10 @@ from callee import Captor, Any
 from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Deserializer
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
-from src.web import RequestHandlerBase, WebRunner, StatusCodeMapping
+from src.web import ApiRequestHandlerBase, WebRunner, StatusCodeMapping
 
 
-class ExampleRequestHandler(RequestHandlerBase):
+class ExampleRequestHandler(ApiRequestHandlerBase):
 
     def __init__(self, mock_sequence: SequenceBuilder,
                  command_pipeline: TopLevelSequenceRunner,

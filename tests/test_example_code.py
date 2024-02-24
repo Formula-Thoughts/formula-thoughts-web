@@ -9,7 +9,7 @@ from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilde
 from src.application import FluentSequenceBuilder, TopLevelSequenceRunner
 from src.crosscutting import ObjectMapper, MappingException, JsonConsoleLogger
 from src.ioc import register_web, Container
-from src.web import RequestHandlerBase, WebRunner
+from src.web import ApiRequestHandlerBase, WebRunner
 
 BAKING_ID = str(uuid.uuid4())
 
@@ -236,7 +236,7 @@ class CreateWhiteBreadSequenceBuilder(FluentSequenceBuilder):
             _add_command(command=self.__publish_bread_notification)
 
 
-class CreateBreadRequestHandler(RequestHandlerBase):
+class CreateBreadRequestHandler(ApiRequestHandlerBase):
 
     def __init__(self, sequence: CreateBreadSequenceBuilder,
                  command_pipeline: TopLevelSequenceRunner,

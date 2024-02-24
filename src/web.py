@@ -59,7 +59,7 @@ class WebRunner:
             }
 
 
-class RequestHandlerBase(ABC):
+class ApiRequestHandlerBase(ABC):
 
     def __init__(self, route_key: str,
                  sequence: SequenceBuilder,
