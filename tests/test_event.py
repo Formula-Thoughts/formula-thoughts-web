@@ -145,7 +145,8 @@ class TestEventRunner(TestCase):
     def test_run_when_there_is_an_exception(self):
         # arrange
         self.__event_handler.event_type = Model
-        self.__event_handler.run = MagicMock(return_values=[Exception("test exception"), None, None])
+        self.__event_handler.run = MagicMock()
+        self.__event_handler.run.side_effect = [Exception("test exception"), None, None]
 
         # act
         message1 = "{\"testProp1\": 4, \"testProp2\": \"test\"}"
@@ -154,6 +155,16 @@ class TestEventRunner(TestCase):
             "Records": [
                 {
                     "messageId": failed_message,
+                    "body": message1,
+                    "messageAttributes": {
+                        "messageType": {
+                            "dataType": "String",
+                            "stringValue": "Model"
+                        }
+                    }
+                },
+                {
+                    "messageId": str(uuid.uuid4()),
                     "body": message1,
                     "messageAttributes": {
                         "messageType": {

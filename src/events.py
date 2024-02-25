@@ -18,20 +18,28 @@ class EventRunner:
         self.__event_handlers = event_handlers
 
     def run(self, event: dict):
+        failed_messages = []
         try:
             for message in event['Records']:
-                event_type = message['messageAttributes']['messageType']['stringValue']
-                body = message['body']
-                self.__logger.add_global_properties(properties={"event_type": event_type})
-                watch = self.__event_handlers
-                matching_handlers = list(filter(lambda x: f"{x.event_type.__name__}" == event_type, self.__event_handlers))
-                if len(matching_handlers) is 0:
-                    raise EventNotFoundException(f"{event_type} does not match any found handlers")
-                matching_handlers[0].run(event=body)
+                try:
+                    event_type = message['messageAttributes']['messageType']['stringValue']
+                    body = message['body']
+                    self.__logger.add_global_properties(properties={"event_type": event_type})
+                    matching_handlers = list(filter(lambda x: f"{x.event_type.__name__}" == event_type, self.__event_handlers))
+                    if len(matching_handlers) is 0:
+                        raise EventNotFoundException(f"{event_type} does not match any found handlers")
+                    matching_handlers[0].run(event=body)
+                except Exception as e:
+                    self.__logger.log_error(message="event runner captured exception")
+                    self.__logger.log_exception(exception=e)
+                    failed_messages.append(message["messageId"])
         except Exception as e:
-            self.__logger.log_error(message="event runner captured exception")
+            self.__logger.log_error(message="fatal error in event handler, retrying entire batch")
             self.__logger.log_exception(exception=e)
-            raise e
+            raise
+        return {
+            'batchItemFailures': list(map(lambda x: {'itemIdentifier': x}, failed_messages))
+        }
 
 
 class EventHandlerBase(ABC):
