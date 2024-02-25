@@ -276,7 +276,7 @@ class TestExampleCode(TestCase):
 
     def test_run_api_request_handler_when_there_is_error(self):
         # arrange & act
-        response = handler(event={"routeKey": "POST /bake-bread", "body": "{\"temperature\": 14.5, \"yeastG\": 24.5, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2}"},
+        response = handler(event={"routeKey": "POST /bake-bread", "body": "{\"temperature\": 0, \"yeastG\": 24.5, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2}"},
                            context={})
 
         # assert
@@ -322,6 +322,6 @@ class TestExampleCode(TestCase):
         ]}, context={})
 
         # assert
-        with self.subTest(msg="assert no failures occured"):
+        with self.subTest(msg="assert 1 failure occured"):
             self.assertEqual(response['batchItemFailures'], [{"itemIdentifier": "059f36b4-87a3-44ab-83d2-661975830a7d"}])
         

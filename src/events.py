@@ -33,6 +33,7 @@ class EventRunner:
             self.__logger.log_exception(exception=e)
             raise e
 
+
 class EventHandlerBase(ABC):
 
     def __init__(self, event: Type,
@@ -54,5 +55,6 @@ class EventHandlerBase(ABC):
                                                                error_capsules=[]),
                                     top_level_sequence=self.__sequence)
 
+    @property
     def event_type(self) -> typing.Type:
         return self.__event

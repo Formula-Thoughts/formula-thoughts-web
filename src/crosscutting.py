@@ -183,5 +183,5 @@ class JsonCamelToSnakeDeserializer:
 
     @staticmethod
     def __camel_case_key_to_snake_case(key: str) -> str:
-        words = re.findall(r'[A-Z]?[a-z]+|[A-Z]{2,}(?=[A-Z][a-z]|\d|\W|$)|\d+', key)
+        words = re.findall(r'[A-Z]?[a-z]+|[A-Z]{1,}(?=[A-Z][a-z]|\d|\W|$)|\d+', key)
         return '_'.join(map(str.lower, words))
