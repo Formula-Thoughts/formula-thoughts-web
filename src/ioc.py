@@ -6,6 +6,7 @@ from src.abstractions import Serializer, Deserializer, Logger
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper, JsonConsoleLogger
 from src.events import EventRunner
+from src.exceptions import EventSchemaInvalidException
 from src.web import WebRunner, StatusCodeMapping
 
 
@@ -46,3 +47,14 @@ def register_web(services: Container):
     services.register(service=StatusCodeMapping, scope=punq.Scope.singleton)
 
 
+def web_and_events_handler(event: dict, context: dict, ioc: Container) -> dict:
+    register_web(services=ioc)
+    web_runner = ioc.resolve(service=WebRunner)
+    event_runner = ioc.resolve(service=EventRunner)
+    # TODO: improve validation, use information from context about request
+    if 'routeKey' in event:
+        return web_runner.run(event=event)
+    elif 'Records' in event:
+        return event_runner.run(event=event)
+    else:
+        raise EventSchemaInvalidException("schema does not match SQS event or API gateway")

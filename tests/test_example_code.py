@@ -20,6 +20,9 @@ BAKING_ID_VAR = "BAKING_ID"
 BAKING_REQUEST_VAR = "BAKING_REQUEST"
 
 
+ioc = Container()
+
+
 def register_dependencies(services: Container) -> None:
     (services.register(BakingService)
      .register(NotificationService)
@@ -39,7 +42,6 @@ def register_dependencies(services: Container) -> None:
 
 
 def handler(event, context) -> dict:
-    ioc = Container()
     register_web(services=ioc)
     register_dependencies(services=ioc)
     web_runner = ioc.resolve(service=WebRunner)
@@ -243,16 +245,22 @@ class CreateBreadRequestHandler(ApiRequestHandlerBase):
 
 class CreateBreadRequestEventHandler(EventHandlerBase):
 
-    def __init__(self, sequence: SequenceBuilder, command_pipeline: TopLevelSequenceRunner,
-                 deserializer: Deserializer, object_mapper: ObjectMapper):
-        super().__init__(BreadModel, sequence, command_pipeline, deserializer, object_mapper)
+    def __init__(self, sequence: CreateBreadAsyncSequenceBuilder,
+                 command_pipeline: TopLevelSequenceRunner,
+                 deserializer: Deserializer,
+                 object_mapper: ObjectMapper):
+        super().__init__(BreadModel,
+                         sequence,
+                         command_pipeline,
+                         deserializer,
+                         object_mapper)
 
 
 class TestExampleCode(TestCase):
         
     def test_run_api_request_handler(self):
         # arrange & act
-        response = handler(event={"routeKey": "POST /bake-bread", "body": json.dumps({"temperature": 14.5, "yeast_g": 24.5, "flour_g": 546.4, "water_ml": 0.1, "olive_oil_ml": 0.2})}, context={})
+        response = handler(event={"routeKey": "POST /bake-bread", "body": "{\"temperature\": 14.5, \"yeastG\": 24.5, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2}"}, context={})
         
         # assert
         with self.subTest(msg="assert response is OK"):
@@ -264,8 +272,7 @@ class TestExampleCode(TestCase):
 
     def test_run_api_request_handler_when_there_is_error(self):
         # arrange & act
-        response = handler(event={"routeKey": "POST /bake-bread", "body": json.dumps(
-            {"temperature": 0, "yeast_g": 24.5, "flour_g": 546.4, "water_ml": 0.1, "olive_oil_ml": 0.2})},
+        response = handler(event={"routeKey": "POST /bake-bread", "body": "{\"temperature\": 14.5, \"yeastG\": 24.5, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2}"},
                            context={})
 
         # assert
@@ -275,4 +282,26 @@ class TestExampleCode(TestCase):
         # assert
         with self.subTest(msg="assert body matches"):
             self.assertEqual(response['body'], "{\"message\": \"temperature has to be above 0c\"}")
+
+    def test_run_event_handler(self):
+        # arrange & act
+        response = handler(event={"Records": [
+            {
+                "body": "{\"temperature\": 14.5, \"yeastG\": 24.5, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2}",
+                "messageAttributes": {
+                    "messageType": {
+                        "dataType": "String",
+                        "stringValue": "BreadModel"
+                    }
+                }
+            }
+        ]}, context={})
+
+        # assert
+        with self.subTest(msg="assert response is OK"):
+            self.assertEqual(response['statusCode'], 200)
+
+        # assert
+        with self.subTest(msg="assert body matches"):
+            self.assertEqual(response['body'], "{\"bakingId\": \"" + BAKING_ID + "\"}")
         
