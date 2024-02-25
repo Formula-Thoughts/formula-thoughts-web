@@ -4,7 +4,7 @@ from unittest.mock import Mock, MagicMock
 
 from callee import Captor, Any
 
-from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Deserializer
+from src.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Deserializer
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
 from src.web import ApiRequestHandlerBase, WebRunner, StatusCodeMapping
@@ -171,9 +171,9 @@ class TestResponse:
 class TestWebRunner(TestCase):
 
     def setUp(self):
-        self.__mock_handler1: RequestHandler = Mock()
-        self.__mock_handler2: RequestHandler = Mock()
-        self.__mock_handler3: RequestHandler = Mock()
+        self.__mock_handler1: ApiRequestHandler = Mock()
+        self.__mock_handler2: ApiRequestHandler = Mock()
+        self.__mock_handler3: ApiRequestHandler = Mock()
         self.__status_code_mapping: StatusCodeMapping = Mock()
         self.__sut = WebRunner(request_handlers=[self.__mock_handler1, self.__mock_handler2, self.__mock_handler3],
                                serializer=JsonSnakeToCamelSerializer(),

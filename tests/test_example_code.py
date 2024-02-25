@@ -5,9 +5,10 @@ from typing import Protocol
 from unittest import TestCase
 
 from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilder, Deserializer, \
-    RequestHandler, Error
+    ApiRequestHandler, Error
 from src.application import FluentSequenceBuilder, TopLevelSequenceRunner
-from src.crosscutting import ObjectMapper, MappingException
+from src.crosscutting import ObjectMapper
+from src.exceptions import MappingException
 from src.ioc import register_web, Container
 from src.web import ApiRequestHandlerBase, WebRunner
 
@@ -26,7 +27,7 @@ def register_dependencies(services: Container) -> None:
     services.register(CreateBreadCommand, CreateWhiteBreadCommand)
     services.register(PublishBreadNotificationCommand, PublishWhiteBreadNotificationCommand)
     services.register(CreateBreadSequenceBuilder, CreateWhiteBreadSequenceBuilder)
-    services.register(RequestHandler, CreateBreadRequestHandler)
+    services.register(ApiRequestHandler, CreateBreadRequestHandler)
     services.register_status_code_mappings({
         BreadResponse: 200,
         BreadValidationError: 400

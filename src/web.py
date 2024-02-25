@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Type
 
-from src.abstractions import SequenceBuilder, ApplicationContext, RequestHandler, Serializer, Logger, Deserializer
+from src.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Serializer, Logger, Deserializer
 from src.application import TopLevelSequenceRunner
 
 
@@ -20,7 +20,7 @@ class StatusCodeMapping:
 class WebRunner:
 
     def __init__(self,
-                 request_handlers: list[RequestHandler],
+                 request_handlers: list[ApiRequestHandler],
                  serializer: Serializer,
                  status_code_mappings: StatusCodeMapping,
                  logger: Logger):

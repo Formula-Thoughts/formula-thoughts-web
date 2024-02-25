@@ -32,13 +32,23 @@ class Command(Protocol):
         ...
 
 
-class RequestHandler(Protocol):
+class ApiRequestHandler(Protocol):
 
     def run(self, event: dict) -> ApplicationContext:
         ...
 
     @property
     def route_key(self) -> str:
+        ...
+
+
+class EventHandler(Protocol):
+
+    def run(self, event: str) -> ApplicationContext:
+        ...
+
+    @property
+    def event_type(self) -> typing.Type:
         ...
 
 

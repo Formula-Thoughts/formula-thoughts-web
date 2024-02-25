@@ -1,7 +1,8 @@
+import typing
 from abc import ABC
 from typing import Type
 
-from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext
+from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler, Logger
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import ObjectMapper
 
@@ -9,7 +10,14 @@ EVENT = "EVENT"
 
 
 class EventRunner:
-    pass
+
+    def __init__(self, event_handlers: list[EventHandler],
+                 logger: Logger):
+        self.__logger = logger
+        self.__event_handlers = event_handlers
+
+    def run(self, event: dict):
+        ...
 
 
 class EventHandlerBase(ABC):
@@ -32,3 +40,6 @@ class EventHandlerBase(ABC):
                                                                variables={EVENT: event_object},
                                                                error_capsules=[]),
                                     top_level_sequence=self.__sequence)
+
+    def event_type(self) -> typing.Type:
+        return self.__event

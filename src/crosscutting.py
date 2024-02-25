@@ -4,6 +4,8 @@ import re
 import typing
 from enum import Enum
 
+from src.exceptions import MappingException
+
 
 class LogSeverity(Enum):
     ERROR = "ERROR"
@@ -74,10 +76,6 @@ def all_annotations(cls):
 
 
 T = typing.TypeVar("T")
-
-
-class MappingException(Exception):
-    pass
 
 
 class ObjectMapper:
