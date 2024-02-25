@@ -5,9 +5,10 @@ from typing import Protocol
 from unittest import TestCase
 
 from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilder, Deserializer, \
-    ApiRequestHandler, Error
+    ApiRequestHandler, Error, EventHandler
 from src.application import FluentSequenceBuilder, TopLevelSequenceRunner
 from src.crosscutting import ObjectMapper
+from src.events import EventHandlerBase, EVENT
 from src.exceptions import MappingException
 from src.ioc import register_web, Container
 from src.web import ApiRequestHandlerBase, WebRunner
@@ -20,18 +21,21 @@ BAKING_REQUEST_VAR = "BAKING_REQUEST"
 
 
 def register_dependencies(services: Container) -> None:
-    services.register(BakingService)
-    services.register(NotificationService)
-    services.register(CreateBreadRequestCommand, CreateWhiteBreadRequestCommand)
-    services.register(ValidateBreadRequestCommand, ValidateWhiteBreadRequestCommand)
-    services.register(CreateBreadCommand, CreateWhiteBreadCommand)
-    services.register(PublishBreadNotificationCommand, PublishWhiteBreadNotificationCommand)
-    services.register(CreateBreadSequenceBuilder, CreateWhiteBreadSequenceBuilder)
-    services.register(ApiRequestHandler, CreateBreadRequestHandler)
-    services.register_status_code_mappings({
+    (services.register(BakingService)
+     .register(NotificationService)
+     .register(CreateBreadRequestCommand, CreateWhiteBreadRequestCommand)
+     .register(ValidateBreadRequestCommand, ValidateWhiteBreadRequestCommand)
+     .register(CreateBreadCommand, CreateWhiteBreadCommand)
+     .register(PublishBreadNotificationCommand, PublishWhiteBreadNotificationCommand)
+     .register(CreateBreadSequenceBuilder, CreateWhiteBreadSequenceBuilder)
+     .register(ApiRequestHandler, CreateBreadRequestHandler)
+     .register_status_code_mappings({
         BreadResponse: 200,
         BreadValidationError: 400
-    })
+     })
+     .register(CreateBreadAsyncSequenceBuilder, CreateWhiteBreadAsyncSequenceBuilder)
+     .register(CreateBreadAsyncCommand, CreateWhiteBreadAsyncCommand)
+     .register(EventHandler, CreateBreadRequestEventHandler))
 
 
 def handler(event, context) -> dict:
@@ -77,6 +81,10 @@ class NotificationService:
         return True
 
 
+class CreateBreadAsyncSequenceBuilder(SequenceBuilder, Protocol):
+    pass
+
+
 class CreateBreadSequenceBuilder(SequenceBuilder, Protocol):
     pass
 
@@ -94,6 +102,10 @@ class ValidateBreadRequestCommand(Command, Protocol):
 
 
 class PublishBreadNotificationCommand(Command, Protocol):
+    pass
+
+
+class CreateBreadAsyncCommand(Command, Protocol):
     pass
 
 
@@ -167,6 +179,15 @@ class CreateWhiteBreadCommand:
         _id = self.__baking_service.bake_bread(context.get_var(BAKING_REQUEST_VAR, BreadModel))
         context.set_var(BAKING_ID_VAR, _id)
         context.response = BreadResponse(_id)
+        
+
+class CreateWhiteBreadAsyncCommand:
+    
+    def __init__(self, baking_service: BakingService):
+        self.__baking_service = baking_service
+        
+    def run(self, context: ApplicationContext) -> None:
+        _id = self.__baking_service.bake_bread(context.get_var(EVENT, BreadModel))
 
 
 class PublishWhiteBreadNotificationCommand:
@@ -178,6 +199,16 @@ class PublishWhiteBreadNotificationCommand:
         published = self.__notification_service.publish(
             notif=BreadNotification(temperature=context.get_var(BAKING_REQUEST_VAR, BreadModel).temperature,
                                     baking_id=context.get_var(BAKING_ID_VAR, str)).__dict__)
+
+
+class CreateWhiteBreadAsyncSequenceBuilder(FluentSequenceBuilder):
+
+    def __init__(self, create_bread_async_command: CreateBreadAsyncCommand):
+        super().__init__()
+        self.__create_bread_async_command = create_bread_async_command
+
+    def build(self):
+        self._add_command(command=self.__create_bread_async_command)
 
 
 class CreateWhiteBreadSequenceBuilder(FluentSequenceBuilder):
@@ -210,9 +241,16 @@ class CreateBreadRequestHandler(ApiRequestHandlerBase):
                          deserializer)
 
 
+class CreateBreadRequestEventHandler(EventHandlerBase):
+
+    def __init__(self, sequence: SequenceBuilder, command_pipeline: TopLevelSequenceRunner,
+                 deserializer: Deserializer, object_mapper: ObjectMapper):
+        super().__init__(BreadModel, sequence, command_pipeline, deserializer, object_mapper)
+
+
 class TestExampleCode(TestCase):
         
-    def test_run_handler(self):
+    def test_run_api_request_handler(self):
         # arrange & act
         response = handler(event={"routeKey": "POST /bake-bread", "body": json.dumps({"temperature": 14.5, "yeast_g": 24.5, "flour_g": 546.4, "water_ml": 0.1, "olive_oil_ml": 0.2})}, context={})
         
@@ -224,7 +262,7 @@ class TestExampleCode(TestCase):
         with self.subTest(msg="assert body matches"):
             self.assertEqual(response['body'], "{\"bakingId\": \""+BAKING_ID+"\"}")
 
-    def test_run_handler_when_there_is_error(self):
+    def test_run_api_request_handler_when_there_is_error(self):
         # arrange & act
         response = handler(event={"routeKey": "POST /bake-bread", "body": json.dumps(
             {"temperature": 0, "yeast_g": 24.5, "flour_g": 546.4, "water_ml": 0.1, "olive_oil_ml": 0.2})},

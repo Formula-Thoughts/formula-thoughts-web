@@ -26,11 +26,12 @@ class Container:
     def resolve(self, service: Type[T]) -> T:
         return self.__container.resolve(service)
 
-    def register_status_code_mappings(self, mappings: dict):
+    def register_status_code_mappings(self, mappings: dict) -> 'Container':
         self.__container.register(service=StatusCodeMapping, scope=punq.Scope.singleton)
         status_mapping: StatusCodeMapping = self.__container.resolve(StatusCodeMapping)
         for code in mappings.keys():
             status_mapping.add_mapping(_type=code, status_code=mappings[code])
+        return self
 
 
 def register_web(services: Container):
