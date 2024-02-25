@@ -100,6 +100,6 @@ class TestEventRunner(TestCase):
         # assert
         with self.subTest(msg="request handler was run twice"):
             self.__event_handler.run.assert_has_calls(calls=[
-                call(message1),
-                call(message2)
+                call(event=message1),
+                call(event=message2)
             ])

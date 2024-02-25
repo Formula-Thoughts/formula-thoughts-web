@@ -17,7 +17,10 @@ class EventRunner:
         self.__event_handlers = event_handlers
 
     def run(self, event: dict):
-        ...
+        for message in event['Records']:
+            event_type = message['messageAttributes']['messageType']['stringValue']
+            body = message['body']
+            list(filter(lambda x: f"{x.event_type.__module__}.{x.event_type.__name__}", self.__event_handlers))[0].run(event=body)
 
 
 class EventHandlerBase(ABC):
