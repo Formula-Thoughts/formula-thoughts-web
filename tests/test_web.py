@@ -55,7 +55,7 @@ class TestRequestHandler(TestCase):
             captured_context: ApplicationContext = context_captor.arg
             self.assertEqual(captured_context.body, None)
             self.assertEqual(captured_context.auth_user_id, None)
-            self.assertEqual(captured_context.parameters, {})
+            self.assertEqual(captured_context.variables, {})
             self.assertEqual(captured_context.error_capsules, [])
 
         with self.subTest(msg="assert context was returned"):
@@ -160,7 +160,7 @@ class TestRequestHandler(TestCase):
         # assert
         with self.subTest(msg="assert context was built correctly"):
             context: ApplicationContext = context_captor.arg
-            self.assertEqual(context.parameters, {"path_param1": "value1", "path_param2": "value1", "path_param3": "value1", "path_param4": 4.2})
+            self.assertEqual(context.variables, {"path_param1": "value1", "path_param2": "value1", "path_param3": "value1", "path_param4": 4.2})
 
 
 @dataclass(unsafe_hash=True)

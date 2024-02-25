@@ -7,11 +7,15 @@ from unittest import TestCase
 from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilder, Deserializer, \
     RequestHandler, Error
 from src.application import FluentSequenceBuilder, TopLevelSequenceRunner
-from src.crosscutting import ObjectMapper, MappingException, JsonConsoleLogger
+from src.crosscutting import ObjectMapper, MappingException
 from src.ioc import register_web, Container
 from src.web import ApiRequestHandlerBase, WebRunner
 
 BAKING_ID = str(uuid.uuid4())
+
+
+BAKING_ID_VAR = "BAKING_ID"
+BAKING_REQUEST_VAR = "BAKING_REQUEST"
 
 
 def register_dependencies(services: Container) -> None:
@@ -27,7 +31,6 @@ def register_dependencies(services: Container) -> None:
         BreadResponse: 200,
         BreadValidationError: 400
     })
-    services.register(CreateBreadState)
 
 
 def handler(event, context) -> dict:
@@ -51,38 +54,6 @@ class BreadModel:
 class BreadNotification:
     temperature: float = None
     baking_id: str = None
-
-
-class CreateBreadState:
-
-    def __init__(self):
-        self.__bread_request: BreadModel = None
-        self.__baking_id: str = None
-        self.__previous_bakes: list[str] = None
-
-    @property
-    def bread_request(self) -> BreadModel:
-        return self.__bread_request
-
-    @bread_request.setter
-    def bread_request(self, value: BreadModel) -> None:
-        self.__bread_request = value
-
-    @property
-    def baking_id(self) -> str:
-        return self.__baking_id
-
-    @baking_id.setter
-    def baking_id(self, value: str) -> None:
-        self.__baking_id = value
-
-    @property
-    def previous_bakes(self) -> list[str]:
-        return self.__previous_bakes
-
-    @previous_bakes.setter
-    def previous_bakes(self, value: list[str]) -> None:
-        self.__previous_bakes = value
 
 
 class BakingService:
@@ -146,16 +117,14 @@ class CreateWhiteBreadRequestCommand:
 
     def __init__(self,
                  mapper: ObjectMapper,
-                 bread_state: CreateBreadState,
                  logger: Logger):
         self.__logger = logger
-        self.__bread_state = bread_state
         self.__mapper = mapper
 
     def run(self, context: ApplicationContext) -> None:
         try:
             model = self.__mapper.map_from_dict(_from=context.body, to=BreadModel)
-            self.__bread_state.bread_request = model
+            context.variables[BAKING_REQUEST_VAR] = model
             self.__logger.add_global_properties(properties={
                 "temperature": model.temperature,
                 "water": model.water_ml,
@@ -169,11 +138,8 @@ class CreateWhiteBreadRequestCommand:
 
 class ValidateWhiteBreadRequestCommand:
 
-    def __init__(self, bread_state: CreateBreadState):
-        self.__bread_state = bread_state
-
     def run(self, context: ApplicationContext) -> None:
-        request = self.__bread_state.bread_request
+        request: BreadModel = context.variables[BAKING_REQUEST_VAR]
 
         if request.temperature <= 0:
             context.error_capsules.append(temperature_error)
@@ -193,28 +159,27 @@ class ValidateWhiteBreadRequestCommand:
 
 class CreateWhiteBreadCommand:
 
-    def __init__(self, baking_service: BakingService,
-                 bread_state: CreateBreadState):
-        self.__bread_state = bread_state
+    def __init__(self, baking_service: BakingService):
         self.__baking_service = baking_service
 
     def run(self, context: ApplicationContext) -> None:
-        _id = self.__baking_service.bake_bread(self.__bread_state.bread_request)
-        self.__bread_state.baking_id = _id
-        context.response = BreadResponse(self.__bread_state.baking_id)
+        baking_request: BreadModel = context.variables[BAKING_REQUEST_VAR]
+        _id = self.__baking_service.bake_bread(baking_request)
+        context.variables[BAKING_ID_VAR] = _id
+        context.response = BreadResponse(_id)
 
 
 class PublishWhiteBreadNotificationCommand:
 
-    def __init__(self, notification_service: NotificationService,
-                 bread_state: CreateBreadState):
-        self.__bread_state = bread_state
+    def __init__(self, notification_service: NotificationService):
         self.__notification_service = notification_service
 
     def run(self, context: ApplicationContext) -> None:
+        request: BreadModel = context.variables[BAKING_REQUEST_VAR]
+        baking_id: str = context.variables[BAKING_ID_VAR]
         published = self.__notification_service.publish(
-            notif=BreadNotification(temperature=self.__bread_state.bread_request.temperature,
-                                    baking_id=self.__bread_state.baking_id).__dict__)
+            notif=BreadNotification(temperature=request.temperature,
+                                    baking_id=baking_id).__dict__)
 
 
 class CreateWhiteBreadSequenceBuilder(FluentSequenceBuilder):

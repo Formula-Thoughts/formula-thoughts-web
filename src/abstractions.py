@@ -12,7 +12,7 @@ class Error:
 class ApplicationContext:
     body: dict = None
     auth_user_id: str = None
-    parameters: dict = None
+    variables: dict = None
     error_capsules: list[Error] = field(default_factory=lambda: [])
     response: typing.Any = None
 

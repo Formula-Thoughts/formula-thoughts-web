@@ -96,7 +96,7 @@ class ApiRequestHandlerBase(ABC):
                 body = event['body']
         context = ApplicationContext(body=body,
                                      auth_user_id=auth_user_id,
-                                     parameters=parameters,
+                                     variables=parameters,
                                      error_capsules=[])
         self.__command_pipeline.run(context=context,
                                     top_level_sequence=self.__sequence)
