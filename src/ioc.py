@@ -5,6 +5,7 @@ import punq
 from src.abstractions import Serializer, Deserializer, Logger
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper, JsonConsoleLogger
+from src.events import EventRunner
 from src.web import WebRunner, StatusCodeMapping
 
 
@@ -35,6 +36,7 @@ class Container:
 
 
 def register_web(services: Container):
+    services.register(service=EventRunner)
     services.register(service=Serializer, implementation=JsonSnakeToCamelSerializer)
     services.register(service=Deserializer, implementation=JsonCamelToSnakeDeserializer)
     services.register(service=TopLevelSequenceRunner)

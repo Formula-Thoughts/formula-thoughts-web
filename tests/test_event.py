@@ -6,6 +6,7 @@ from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext, 
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import JsonCamelToSnakeDeserializer, ObjectMapper
 from src.events import EventHandlerBase, EventRunner
+from src.exceptions import EventNotFoundException
 
 
 @dataclass(unsafe_hash=True)
@@ -103,3 +104,34 @@ class TestEventRunner(TestCase):
                 call(event=message1),
                 call(event=message2)
             ])
+
+    def test_run_when_event_not_found(self):
+        # arrange
+        self.__event_handler.event_type = Model
+        self.__event_handler.run = MagicMock()
+
+        # act
+        message1 = "{\"testProp1\": 4, \"testProp2\": \"test\"}"
+        event = {
+            "Records": [
+                {
+                    "body": message1,
+                    "messageAttributes": {
+                        "messageType": {
+                            "dataType": "String",
+                            "stringValue": "tests.test_event.Model2"
+                        }
+                    }
+                }
+            ]
+        }
+        sut_call = lambda: self.__sut.run(event=event)
+
+        # assert
+        with self.subTest(msg="sut call raises exception"):
+            with self.assertRaises(expected_exception=EventNotFoundException):
+                sut_call()
+
+        # assert
+        with self.subTest(msg="request handler was not run"):
+            self.__event_handler.run.assert_not_called()
