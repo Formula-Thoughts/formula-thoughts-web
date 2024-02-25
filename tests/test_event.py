@@ -135,3 +135,30 @@ class TestEventRunner(TestCase):
         # assert
         with self.subTest(msg="request handler was not run"):
             self.__event_handler.run.assert_not_called()
+
+    def test_run_when_there_is_exception(self):
+        # arrange
+        self.__event_handler.event_type = Model
+        self.__event_handler.run = MagicMock(return_value=Exception("test exception"))
+
+        # act
+        message1 = "{\"testProp1\": 4, \"testProp2\": \"test\"}"
+        event = {
+            "Records": [
+                {
+                    "body": message1,
+                    "messageAttributes": {
+                        "messageType": {
+                            "dataType": "String",
+                            "stringValue": "Model2"
+                        }
+                    }
+                }
+            ]
+        }
+        sut_call = lambda: self.__sut.run(event=event)
+
+        # assert
+        with self.subTest(msg="sut call raises exception"):
+            with self.assertRaises(expected_exception=Exception):
+                sut_call()
