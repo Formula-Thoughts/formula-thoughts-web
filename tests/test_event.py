@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from unittest import TestCase
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, call
 
-from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext
+from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import JsonCamelToSnakeDeserializer, ObjectMapper
-from src.events import EventHandlerBase
+from src.events import EventHandlerBase, EventRunner
 
 
 @dataclass(unsafe_hash=True)
@@ -61,4 +61,45 @@ class TestEventHandler(TestCase):
 class TestEventRunner(TestCase):
     
     def setUp(self):
-        ...
+        self.__event_handler: EventHandler = Mock()
+        self.__event_handlers = [self.__event_handler]
+        self.__sut = EventRunner(event_handlers=self.__event_handlers,
+                                 logger=Mock())
+
+    def test_run(self):
+        # arrange
+        self.__event_handler.event_type = Model
+        self.__event_handler.run = MagicMock()
+
+        # act
+        message1 = "{\"testProp1\": 4, \"testProp2\": \"test\"}"
+        message2 = "{\"testProp1\": 5, \"testProp2\": \"test 2\"}"
+        self.__sut.run(event={
+            "Records": [
+                {
+                    "body": message1,
+                    "messageAttributes": {
+                        "messageType": {
+                            "dataType": "String",
+                            "stringValue": "tests.test_event.Model"
+                        }
+                    }
+                },
+                {
+                    "body": message2,
+                    "messageAttributes": {
+                        "messageType": {
+                            "dataType": "String",
+                            "stringValue": "tests.test_event.Model"
+                        }
+                    }
+                }
+            ]
+        })
+
+        # assert
+        with self.subTest(msg="request handler was run twice"):
+            self.__event_handler.run.assert_has_calls(calls=[
+                call(message1),
+                call(message2)
+            ])
