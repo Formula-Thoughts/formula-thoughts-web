@@ -3,6 +3,9 @@ from dataclasses import field, dataclass
 from typing import Protocol
 
 
+TVar = typing.TypeVar('TVar')
+
+
 @dataclass(unsafe_hash=True)
 class Error:
     message: str = None
@@ -15,6 +18,12 @@ class ApplicationContext:
     variables: dict = None
     error_capsules: list[Error] = field(default_factory=lambda: [])
     response: typing.Any = None
+
+    def get_var(self, name: str, _type: typing.Type[TVar]) -> TVar:
+        return self.variables[name]
+
+    def set_var(self, name: str, value: typing.Any):
+        self.variables[name] = value
 
 
 class Command(Protocol):

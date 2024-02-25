@@ -124,7 +124,7 @@ class CreateWhiteBreadRequestCommand:
     def run(self, context: ApplicationContext) -> None:
         try:
             model = self.__mapper.map_from_dict(_from=context.body, to=BreadModel)
-            context.variables[BAKING_REQUEST_VAR] = model
+            context.set_var(BAKING_REQUEST_VAR, model)
             self.__logger.add_global_properties(properties={
                 "temperature": model.temperature,
                 "water": model.water_ml,
@@ -139,7 +139,7 @@ class CreateWhiteBreadRequestCommand:
 class ValidateWhiteBreadRequestCommand:
 
     def run(self, context: ApplicationContext) -> None:
-        request: BreadModel = context.variables[BAKING_REQUEST_VAR]
+        request = context.get_var(BAKING_REQUEST_VAR, BreadModel)
 
         if request.temperature <= 0:
             context.error_capsules.append(temperature_error)
@@ -163,9 +163,8 @@ class CreateWhiteBreadCommand:
         self.__baking_service = baking_service
 
     def run(self, context: ApplicationContext) -> None:
-        baking_request: BreadModel = context.variables[BAKING_REQUEST_VAR]
-        _id = self.__baking_service.bake_bread(baking_request)
-        context.variables[BAKING_ID_VAR] = _id
+        _id = self.__baking_service.bake_bread(context.get_var(BAKING_REQUEST_VAR, BreadModel))
+        context.set_var(BAKING_ID_VAR, _id)
         context.response = BreadResponse(_id)
 
 
@@ -175,11 +174,9 @@ class PublishWhiteBreadNotificationCommand:
         self.__notification_service = notification_service
 
     def run(self, context: ApplicationContext) -> None:
-        request: BreadModel = context.variables[BAKING_REQUEST_VAR]
-        baking_id: str = context.variables[BAKING_ID_VAR]
         published = self.__notification_service.publish(
-            notif=BreadNotification(temperature=request.temperature,
-                                    baking_id=baking_id).__dict__)
+            notif=BreadNotification(temperature=context.get_var(BAKING_REQUEST_VAR, BreadModel).temperature,
+                                    baking_id=context.get_var(BAKING_ID_VAR, str)).__dict__)
 
 
 class CreateWhiteBreadSequenceBuilder(FluentSequenceBuilder):

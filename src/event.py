@@ -5,6 +5,9 @@ from src.abstractions import SequenceBuilder, Deserializer
 from src.application import TopLevelSequenceRunner
 
 
+EVENT = "EVENT"
+
+
 class EventRunner:
     pass
 
