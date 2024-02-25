@@ -76,7 +76,7 @@ class TestEventRunner(TestCase):
         # act
         message1 = "{\"testProp1\": 4, \"testProp2\": \"test\"}"
         message2 = "{\"testProp1\": 5, \"testProp2\": \"test 2\"}"
-        self.__sut.run(event={
+        response = self.__sut.run(event={
             "Records": [
                 {
                     "body": message1,
@@ -106,16 +106,22 @@ class TestEventRunner(TestCase):
                 call(event=message2)
             ])
 
+        # assert
+        with self.subTest(msg="failed messages are empty"):
+            self.assertEqual(len(response['batchItemFailures']), 0)
+
     def test_run_when_event_not_found(self):
         # arrange
         self.__event_handler.event_type = Model
         self.__event_handler.run = MagicMock()
+        failed_message = str(uuid.uuid4())
 
         # act
         message1 = "{\"testProp1\": 4, \"testProp2\": \"test\"}"
         event = {
             "Records": [
                 {
+                    "messageId": failed_message,
                     "body": message1,
                     "messageAttributes": {
                         "messageType": {
@@ -126,16 +132,15 @@ class TestEventRunner(TestCase):
                 }
             ]
         }
-        sut_call = lambda: self.__sut.run(event=event)
+        response = self.__sut.run(event=event)
 
         # assert
-        with self.subTest(msg="sut call raises exception"):
-            with self.assertRaises(expected_exception=EventNotFoundException):
-                sut_call()
+        with self.subTest(msg="sut call only returns single failed message"):
+            self.assertEqual(len(response['batchItemFailures']), 1)
 
         # assert
-        with self.subTest(msg="request handler was not run"):
-            self.__event_handler.run.assert_not_called()
+        with self.subTest(msg="sut call returns failed messages"):
+            self.assertEqual(response['batchItemFailures'][0]['itemIdentifier'], failed_message)
 
     def test_run_when_there_is_an_exception(self):
         # arrange
