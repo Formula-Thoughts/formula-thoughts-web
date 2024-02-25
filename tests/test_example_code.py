@@ -10,7 +10,7 @@ from src.application import FluentSequenceBuilder, TopLevelSequenceRunner
 from src.crosscutting import ObjectMapper
 from src.events import EventHandlerBase, EVENT
 from src.exceptions import MappingException
-from src.ioc import register_web, Container
+from src.ioc import register_web, Container, LambdaRunner
 from src.web import ApiRequestHandlerBase, WebRunner
 
 BAKING_ID = str(uuid.uuid4())
@@ -18,9 +18,6 @@ BAKING_ID = str(uuid.uuid4())
 
 BAKING_ID_VAR = "BAKING_ID"
 BAKING_REQUEST_VAR = "BAKING_REQUEST"
-
-
-ioc = Container()
 
 
 def register_dependencies(services: Container) -> None:
@@ -42,10 +39,11 @@ def register_dependencies(services: Container) -> None:
 
 
 def handler(event, context) -> dict:
+    ioc = Container()
     register_web(services=ioc)
     register_dependencies(services=ioc)
-    web_runner = ioc.resolve(service=WebRunner)
-    return web_runner.run(event=event)
+    lambda_runner = ioc.resolve(service=LambdaRunner)
+    return lambda_runner.run(event=event, context=context)
 
 
 @dataclass(unsafe_hash=True)
@@ -189,7 +187,13 @@ class CreateWhiteBreadAsyncCommand:
         self.__baking_service = baking_service
         
     def run(self, context: ApplicationContext) -> None:
+        event = context.get_var(EVENT, BreadModel)
+
+        if event.yeast_g <= 0:
+            context.error_capsules.append(yeast_error)
+
         _id = self.__baking_service.bake_bread(context.get_var(EVENT, BreadModel))
+        context.set_var(BAKING_ID_VAR, _id)
 
 
 class PublishWhiteBreadNotificationCommand:
@@ -287,6 +291,7 @@ class TestExampleCode(TestCase):
         # arrange & act
         response = handler(event={"Records": [
             {
+                "messageId": "059f36b4-87a3-44ab-83d2-661975830a7d",
                 "body": "{\"temperature\": 14.5, \"yeastG\": 24.5, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2}",
                 "messageAttributes": {
                     "messageType": {
@@ -298,10 +303,25 @@ class TestExampleCode(TestCase):
         ]}, context={})
 
         # assert
-        with self.subTest(msg="assert response is OK"):
-            self.assertEqual(response['statusCode'], 200)
+        with self.subTest(msg="assert no failures occured"):
+            self.assertEqual(response['batchItemFailures'], [])
+
+    def test_run_event_handler_when_there_is_a_failiure(self):
+        # arrange & act
+        response = handler(event={"Records": [
+            {
+                "messageId": "059f36b4-87a3-44ab-83d2-661975830a7d",
+                "body": "{\"temperature\": 54, \"yeastG\": 0, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2}",
+                "messageAttributes": {
+                    "messageType": {
+                        "dataType": "String",
+                        "stringValue": "BreadModel"
+                    }
+                }
+            }
+        ]}, context={})
 
         # assert
-        with self.subTest(msg="assert body matches"):
-            self.assertEqual(response['body'], "{\"bakingId\": \"" + BAKING_ID + "\"}")
+        with self.subTest(msg="assert no failures occured"):
+            self.assertEqual(response['batchItemFailures'], [{"itemIdentifier": "059f36b4-87a3-44ab-83d2-661975830a7d"}])
         

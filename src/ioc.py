@@ -13,6 +13,23 @@ from src.web import WebRunner, StatusCodeMapping
 T = TypeVar('T')
 
 
+class LambdaRunner:
+    
+    def __init__(self, web_runner: WebRunner,
+                 event_runner: EventRunner):
+        self.__event_runner = event_runner
+        self.__web_runner = web_runner
+        
+    def run(self, event: dict, context: dict) -> dict:
+        # TODO: improve validation, use information from context about request
+        if 'routeKey' in event:
+            return self.__web_runner.run(event=event)
+        elif 'Records' in event:
+            return self.__event_runner.run(event=event)
+        else:
+            raise EventSchemaInvalidException("schema does not match SQS event or API gateway")
+
+
 class Container:
 
     def __init__(self):
@@ -37,6 +54,7 @@ class Container:
 
 
 def register_web(services: Container):
+    services.register(service=LambdaRunner)
     services.register(service=EventRunner)
     services.register(service=Serializer, implementation=JsonSnakeToCamelSerializer)
     services.register(service=Deserializer, implementation=JsonCamelToSnakeDeserializer)
@@ -45,16 +63,3 @@ def register_web(services: Container):
     services.register(service=ObjectMapper)
     services.register(service=Logger, implementation=JsonConsoleLogger)
     services.register(service=StatusCodeMapping, scope=punq.Scope.singleton)
-
-
-def web_and_events_handler(event: dict, context: dict, ioc: Container) -> dict:
-    register_web(services=ioc)
-    web_runner = ioc.resolve(service=WebRunner)
-    event_runner = ioc.resolve(service=EventRunner)
-    # TODO: improve validation, use information from context about request
-    if 'routeKey' in event:
-        return web_runner.run(event=event)
-    elif 'Records' in event:
-        return event_runner.run(event=event)
-    else:
-        raise EventSchemaInvalidException("schema does not match SQS event or API gateway")

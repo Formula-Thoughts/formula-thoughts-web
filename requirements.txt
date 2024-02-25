@@ -4,3 +4,4 @@ boto3==1.26.50
 validators==0.20.0
 callee==0.3.1
 punq==0.7.0
+ddt==1.7.1

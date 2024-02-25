@@ -1,18 +1,19 @@
 import datetime
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import get_args
+from typing import get_args, Union
 from unittest import TestCase
 
+import ddt
 from autofixture import AutoFixture
 
-from src.crosscutting import ObjectMapper
+from src.crosscutting import ObjectMapper, JsonCamelToSnakeDeserializer, JsonSnakeToCamelSerializer
 
-TEST_DICT_JSON = "{\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}"
+TEST_DICT_JSON = "{\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2, \"yeastG\": 24.2}"
 TEST_LIST_SERIALIZATION_JSON = "[{\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}, {\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}, {\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}]"
 TEST_LIST_SERIALIZATION_EMPTY_JSON = "[]"
 TEST_DICT_NESTED_JSON = "{\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2, \"nestedObject\": {\"name\": \"dennis reynolds\", \"snakeValue\": 3}, \"arrayValue\": [\"apples\", \"pears\", \"oranges\"]}"
-TEST_DICT_JSON_WITH_CAPS_KEY = "{\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2, \"capitalLETTERSValue\": 1}"
+TEST_DICT_JSON_WITH_CAPS_KEY = "{\"yeastG\": 24.4, \"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2, \"capitalLETTERSValue\": 1}"
 TEST_DICT_WITH_ENUM_JSON = "{\"name\": \"adam raymond\", \"enum\": \"VALUE1\"}"
 TEST_DICT_WITH_ENUM_LIST_JSON = "{\"name\": \"adam raymond\", \"enum\": [\"VALUE1\", \"VALUE2\"]}"
 TEST_LIST_OF_DICTS_WITH_ENUM_JSON = "[{\"name\": \"adam raymond\", \"enum\": \"VALUE1\"}, {\"name\": \"adam raymond\", \"enum\": \"VALUE2\"}]"
@@ -22,7 +23,8 @@ TEST_LIST_OF_DICTS_WITH_ENUM_LIST_JSON = "[{\"name\": \"adam raymond\", \"enum\"
 TEST_DICT = {
     "name": "adam raymond",
     "snake_in_value": "snake_in_value",
-    "value_2_to_3_values": 2
+    "value_2_to_3_values": 2,
+    "yeast_g": 24.2
 }
 
 TEST_LIST_SERIALIZATION_EMPTY = []
@@ -53,6 +55,7 @@ TEST_NESTED_DICT = {
 }
 
 TEST_DICT_WITH_CAPS_KEY = {
+    "yeast_g": 24.2,
     "name": "adam raymond",
     "snake_in_value": "snake_in_value",
     "value_2_to_3_values": 2,
@@ -238,3 +241,118 @@ class TestMapper(TestCase):
         # assert
         with self.subTest(msg="list of floats field matches"):
             assert test_other_dto.list_of_floats == test_dto.list_of_floats
+
+
+@ddt.ddt
+class TestJsonSnakeToCamelSerializer(TestCase):
+
+    def setUp(self):
+        self.__json_snake_to_camel_serializer = JsonSnakeToCamelSerializer()
+
+    def test_serialize(self):
+        # arrange
+        input_data = TEST_DICT
+        expected = TEST_DICT_JSON
+
+        # act
+        actual = self.__json_snake_to_camel_serializer.serialize(input_data)
+
+        # assert
+        self.assertEqual(actual, expected)
+
+    @ddt.data((TEST_DICT_WITH_ENUM, TEST_DICT_WITH_ENUM_JSON),
+          (TEST_DICT_WITH_ENUM_LIST, TEST_DICT_WITH_ENUM_LIST_JSON),
+          (TEST_LIST_OF_DICTS_WITH_ENUM, TEST_LIST_OF_DICTS_WITH_ENUM_JSON),
+          (TEST_LIST_OF_DICTS_WITH_ENUM_LIST, TEST_LIST_OF_DICTS_WITH_ENUM_LIST_JSON))
+    def test_serialize_with_enum(self, data: tuple[Union[list, dict], str]):
+        # arrange
+        (input_data, expected) = data
+
+        # act
+        actual = self.__json_snake_to_camel_serializer.serialize(input_data)
+
+        # assert
+        self.assertEqual(actual, expected)
+
+    def test_serialize_nested(self):
+        # arrange
+        input_data = TEST_NESTED_DICT
+        expected = TEST_DICT_NESTED_JSON
+
+        # act
+        actual = self.__json_snake_to_camel_serializer.serialize(input_data)
+
+        # assert
+        self.assertEqual(actual, expected)
+
+    def test_serialize_collection(self):
+        # arrange
+        input_data = TEST_LIST_SERIALIZATION
+        expected = TEST_LIST_SERIALIZATION_JSON
+
+        # act
+        actual = self.__json_snake_to_camel_serializer.serialize(input_data)
+
+        # assert
+        self.assertEqual(actual, expected)
+
+    def test_serialize_collection_empty(self):
+        # arrange
+        input_data = TEST_LIST_SERIALIZATION_EMPTY
+        expected = TEST_LIST_SERIALIZATION_EMPTY_JSON
+
+        # act
+        actual = self.__json_snake_to_camel_serializer.serialize(input_data)
+
+        # assert
+        self.assertEqual(actual, expected)
+
+
+class TestJsonCamelToSnakeCaseDeserializer(TestCase):
+
+    def setUp(self):
+        self.__json_camel_to_snake_case_deserializer = JsonCamelToSnakeDeserializer()
+
+    def test_deserialize(self):
+        # arrange
+        expected = TEST_DICT_WITH_CAPS_KEY
+        input_data = TEST_DICT_JSON_WITH_CAPS_KEY
+
+        # act
+        actual = self.__json_camel_to_snake_case_deserializer.deserialize(input_data)
+
+        # assert
+        self.assertEqual(actual, expected)
+
+    def test_deserialize_nested(self):
+        # arrange
+        expected = TEST_NESTED_DICT
+        input_data = TEST_DICT_NESTED_JSON
+
+        # act
+        actual = self.__json_camel_to_snake_case_deserializer.deserialize(input_data)
+
+        # assert
+        self.assertEqual(actual, expected)
+
+    def test_deserialize_collection(self):
+        # arrange
+        expected = TEST_LIST_SERIALIZATION
+        input_data = TEST_LIST_SERIALIZATION_JSON
+
+        # act
+        actual = self.__json_camel_to_snake_case_deserializer.deserialize(input_data)
+
+        # assert
+        self.assertEqual(actual, expected)
+
+    def test_serialize_collection_empty(self):
+        # arrange
+        expected = TEST_LIST_SERIALIZATION_EMPTY
+        input_data = TEST_LIST_SERIALIZATION_EMPTY_JSON
+
+        # act
+        actual = self.__json_camel_to_snake_case_deserializer.deserialize(input_data)
+
+        # assert
+        self.assertEqual(actual, expected)
