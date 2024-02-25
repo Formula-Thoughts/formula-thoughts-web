@@ -4,7 +4,7 @@ from unittest.mock import Mock, MagicMock
 
 from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext
 from src.application import TopLevelSequenceRunner
-from src.crosscutting import JsonCamelToSnakeDeserializer
+from src.crosscutting import JsonCamelToSnakeDeserializer, ObjectMapper
 from src.event import EventHandlerBase
 
 
@@ -19,11 +19,13 @@ class EventHandler(EventHandlerBase):
     def __init__(self,
                  mock_sequence: SequenceBuilder,
                  command_pipeline: TopLevelSequenceRunner,
-                 deserializer: Deserializer):
-        super().__init__(Model,
-                         mock_sequence,
-                         command_pipeline,
-                         deserializer)
+                 deserializer: Deserializer,
+                 object_mapper: ObjectMapper) -> None:
+        super().__init__(event=Model,
+                         sequence=mock_sequence,
+                         command_pipeline=command_pipeline,
+                         deserializer=deserializer,
+                         object_mapper=object_mapper)
 
 
 class TestEventHandler(TestCase):
@@ -33,7 +35,8 @@ class TestEventHandler(TestCase):
         self.__mock_sequence: SequenceBuilder = Mock()
         self.__sut = EventHandler(mock_sequence=self.__mock_sequence,
                                   command_pipeline=self.__command_pipeline,
-                                  deserializer=JsonCamelToSnakeDeserializer())
+                                  deserializer=JsonCamelToSnakeDeserializer(),
+                                  object_mapper=ObjectMapper())
 
     def test_run(self):
         # arrange
