@@ -5,6 +5,7 @@ from typing import Type
 from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler, Logger
 from src.application import TopLevelSequenceRunner
 from src.crosscutting import ObjectMapper
+from src.exceptions import EventNotFoundException
 
 EVENT = "EVENT"
 
@@ -20,7 +21,11 @@ class EventRunner:
         for message in event['Records']:
             event_type = message['messageAttributes']['messageType']['stringValue']
             body = message['body']
-            list(filter(lambda x: f"{x.event_type.__module__}.{x.event_type.__name__}", self.__event_handlers))[0].run(event=body)
+            watch = self.__event_handlers
+            matching_handlers = list(filter(lambda x: f"{x.event_type.__name__}" == event_type, self.__event_handlers))
+            if len(matching_handlers) is 0:
+                raise EventNotFoundException(f"{event_type} does not match any found handlers")
+            matching_handlers[0].run(event=body)
 
 
 class EventHandlerBase(ABC):

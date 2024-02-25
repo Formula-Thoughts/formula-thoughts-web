@@ -82,7 +82,7 @@ class TestEventRunner(TestCase):
                     "messageAttributes": {
                         "messageType": {
                             "dataType": "String",
-                            "stringValue": "tests.test_event.Model"
+                            "stringValue": "Model"
                         }
                     }
                 },
@@ -91,7 +91,7 @@ class TestEventRunner(TestCase):
                     "messageAttributes": {
                         "messageType": {
                             "dataType": "String",
-                            "stringValue": "tests.test_event.Model"
+                            "stringValue": "Model"
                         }
                     }
                 }
@@ -119,7 +119,7 @@ class TestEventRunner(TestCase):
                     "messageAttributes": {
                         "messageType": {
                             "dataType": "String",
-                            "stringValue": "tests.test_event.Model2"
+                            "stringValue": "Model2"
                         }
                     }
                 }
