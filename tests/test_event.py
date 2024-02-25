@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock, call
@@ -136,29 +137,44 @@ class TestEventRunner(TestCase):
         with self.subTest(msg="request handler was not run"):
             self.__event_handler.run.assert_not_called()
 
-    def test_run_when_there_is_exception(self):
+    def test_run_when_there_is_an_exception(self):
         # arrange
         self.__event_handler.event_type = Model
-        self.__event_handler.run = MagicMock(return_value=Exception("test exception"))
+        self.__event_handler.run = MagicMock(return_values=[Exception("test exception"), None, None])
 
         # act
         message1 = "{\"testProp1\": 4, \"testProp2\": \"test\"}"
+        failed_message = str(uuid.uuid4())
         event = {
             "Records": [
                 {
+                    "messageId": failed_message,
                     "body": message1,
                     "messageAttributes": {
                         "messageType": {
                             "dataType": "String",
-                            "stringValue": "Model2"
+                            "stringValue": "Model"
+                        }
+                    }
+                },
+                {
+                    "messageId": str(uuid.uuid4()),
+                    "body": message1,
+                    "messageAttributes": {
+                        "messageType": {
+                            "dataType": "String",
+                            "stringValue": "Model"
                         }
                     }
                 }
             ]
         }
-        sut_call = lambda: self.__sut.run(event=event)
+        response = self.__sut.run(event=event)
 
         # assert
-        with self.subTest(msg="sut call raises exception"):
-            with self.assertRaises(expected_exception=Exception):
-                sut_call()
+        with self.subTest(msg="sut call only returns single failed message"):
+            self.assertEqual(len(response['batchItemFailures']), 1)
+
+        # assert
+        with self.subTest(msg="sut call returns failed messages"):
+            self.assertEqual(response['batchItemFailures'][0]['itemIdentifier'], failed_message)
