@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 from src.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext, Error, \
     ErrorHandlingStrategy
+from src.exceptions import StrategyNotFoundException
 
 SUBSEQUENCE = "subsequence"
 COMMAND = "command"
@@ -88,7 +89,11 @@ class ErrorHandlingStrategyFactory:
         self.__error_handling_strategies = error_handling_strategies
 
     def get_error_handling_strategy(self) -> ErrorHandlingStrategy:
-        ...
+        matching_strategies = list(filter(lambda x: x.strategy == self.__error_handling_type_state.error_handling_type, self.__error_handling_strategies))
+        if len(matching_strategies) == 0:
+            raise StrategyNotFoundException(f"{self.__error_handling_type_state.error_handling_type} not found")
+
+        return matching_strategies[0]
 
 
 class TopLevelSequenceRunner:
