@@ -3,7 +3,7 @@ from abc import ABC
 from typing import Type
 
 from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler, Logger
-from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState
+from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_EXCEPTION_ERROR
 from src.crosscutting import ObjectMapper
 from src.exceptions import EventNotFoundException
 
@@ -22,6 +22,7 @@ class EventRunner:
     def run(self, event: dict):
         failed_messages = []
         try:
+            self.__error_handling_state.error_handling_type = USE_EXCEPTION_ERROR
             for message in event['Records']:
                 try:
                     event_type = message['messageAttributes']['messageType']['stringValue']
