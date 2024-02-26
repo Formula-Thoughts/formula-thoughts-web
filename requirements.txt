@@ -1,7 +1,5 @@
-jsonschema==4.17.3
+jsonschema==4.21.1
 filetype==1.2.0
-boto3==1.26.50
-validators==0.20.0
-callee==0.3.1
+boto3==1.34.50
+validators==0.22.0
 punq==0.7.0
-ddt==1.7.1
