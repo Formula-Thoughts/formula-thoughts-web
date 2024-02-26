@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Type
 
 from src.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Serializer, Logger, Deserializer
-from src.application import TopLevelSequenceRunner
+from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState
 
 
 class StatusCodeMapping:
@@ -23,7 +23,9 @@ class WebRunner:
                  request_handlers: list[ApiRequestHandler],
                  serializer: Serializer,
                  status_code_mappings: StatusCodeMapping,
+                 error_handling_state: ErrorHandlingTypeState,
                  logger: Logger):
+        self.__error_handling_state = error_handling_state
         self.__status_code_mappings = status_code_mappings
         self.__logger = logger
         self.__serializer = serializer

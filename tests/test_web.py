@@ -5,7 +5,7 @@ from unittest.mock import Mock, MagicMock
 from callee import Captor, Any
 
 from src.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Deserializer
-from src.application import TopLevelSequenceRunner
+from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_RESPONSE_ERROR
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
 from src.web import ApiRequestHandlerBase, WebRunner, StatusCodeMapping
 
@@ -174,11 +174,13 @@ class TestWebRunner(TestCase):
         self.__mock_handler1: ApiRequestHandler = Mock()
         self.__mock_handler2: ApiRequestHandler = Mock()
         self.__mock_handler3: ApiRequestHandler = Mock()
+        self.__error_handling_state = ErrorHandlingTypeState(default_error_handling_strategy="unknown")
         self.__status_code_mapping: StatusCodeMapping = Mock()
         self.__sut = WebRunner(request_handlers=[self.__mock_handler1, self.__mock_handler2, self.__mock_handler3],
                                serializer=JsonSnakeToCamelSerializer(),
                                status_code_mappings=self.__status_code_mapping,
-                               logger=Mock())
+                               logger=Mock(),
+                               error_handling_state=self.__error_handling_state)
 
     def test_run_basic(self):
         # arrange
@@ -193,6 +195,10 @@ class TestWebRunner(TestCase):
 
         # act
         response = self.__sut.run(event=event)
+
+        # assert
+        with self.subTest(msg="assert error handling strategy is set"):
+            self.assertEqual(self.__error_handling_state.error_handling_type, USE_RESPONSE_ERROR)
 
         # assert
         with self.subTest(msg="assert correct handler was run"):
