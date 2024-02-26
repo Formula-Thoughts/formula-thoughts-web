@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import Mock, MagicMock, call
 
 from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler
-from src.application import TopLevelSequenceRunner
+from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_EXCEPTION_ERROR
 from src.crosscutting import JsonCamelToSnakeDeserializer, ObjectMapper
 from src.events import EventHandlerBase, EventRunner
 from src.exceptions import EventNotFoundException
@@ -63,10 +63,12 @@ class TestEventHandler(TestCase):
 class TestEventRunner(TestCase):
     
     def setUp(self):
+        self.__error_handling_state = ErrorHandlingTypeState(default_error_handling_strategy="unknown")
         self.__event_handler: EventHandler = Mock()
         self.__event_handlers = [self.__event_handler]
         self.__sut = EventRunner(event_handlers=self.__event_handlers,
-                                 logger=Mock())
+                                 logger=Mock(),
+                                 error_handling_state=self.__error_handling_state)
 
     def test_run(self):
         # arrange
@@ -98,6 +100,10 @@ class TestEventRunner(TestCase):
                 }
             ]
         })
+
+        # assert
+        with self.subTest(msg="error handling state is set to exception handling state"):
+            self.assertEqual(self.__error_handling_state.error_handling_type, USE_EXCEPTION_ERROR)
 
         # assert
         with self.subTest(msg="request handler was run twice"):

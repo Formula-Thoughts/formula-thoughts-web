@@ -3,7 +3,7 @@ from abc import ABC
 from typing import Type
 
 from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler, Logger
-from src.application import TopLevelSequenceRunner
+from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState
 from src.crosscutting import ObjectMapper
 from src.exceptions import EventNotFoundException
 
@@ -13,7 +13,9 @@ EVENT = "EVENT"
 class EventRunner:
 
     def __init__(self, event_handlers: list[EventHandler],
+                 error_handling_state: ErrorHandlingTypeState,
                  logger: Logger):
+        self.__error_handling_state = error_handling_state
         self.__logger = logger
         self.__event_handlers = event_handlers
 

@@ -6,7 +6,7 @@ from unittest import TestCase
 
 from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilder, Deserializer, \
     ApiRequestHandler, Error, EventHandler
-from src.application import FluentSequenceBuilder, TopLevelSequenceRunner
+from src.application import FluentSequenceBuilder, TopLevelSequenceRunner, USE_RESPONSE_ERROR
 from src.crosscutting import ObjectMapper
 from src.events import EventHandlerBase, EVENT
 from src.exceptions import MappingException
@@ -40,7 +40,7 @@ def register_dependencies(services: Container) -> None:
 
 def handler(event, context) -> dict:
     ioc = Container()
-    register_web(services=ioc)
+    register_web(services=ioc, default_error_handling_strategy=USE_RESPONSE_ERROR)
     register_dependencies(services=ioc)
     lambda_runner = ioc.resolve(service=LambdaRunner)
     return lambda_runner.run(event=event, context=context)
