@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Type
 
 from src.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Serializer, Logger, Deserializer
-from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState
+from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_RESPONSE_ERROR
 
 
 class StatusCodeMapping:
@@ -32,6 +32,7 @@ class WebRunner:
         self.__request_handlers = request_handlers
 
     def run(self, event) -> dict:
+        self.__error_handling_state.error_handling_type = USE_RESPONSE_ERROR
         headers = {"Content-Type": "application/json"}
         request_handler_matches = list(filter(lambda x: x.route_key == event['routeKey'], self.__request_handlers))
         if len(request_handler_matches) == 0:
