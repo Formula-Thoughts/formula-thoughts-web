@@ -106,16 +106,22 @@ class TopLevelSequenceRunner:
                 name = f"{inspect.getmodule(action).__name__}.{action.__name__}"
             except Exception:
                 ...
-            self.__logger.log_event(message="command event", properties={"action": name})
-            self.__logger.log_info(f"begin command {name}")
-            self.__logger.log_trace(f"request {context.body}")
-            self.__logger.log_trace(f"response {context.response}")
-            action.run(context)
-            # for now, we throw on first error in top level sequence
-            if any(context.error_capsules):
-                error = context.error_capsules[-1]
-                self.__logger.log_error(f"error found in error capsule {type(error).__name__}")
-                context.response = error
-                self.__logger.log_error(f"command pipeline SHORTED!")
-                break
-            self.__logger.log_info(f"end command {name}")
+            try:
+                self.__logger.log_event(message="command event", properties={"action": name})
+                self.__logger.log_info(f"begin command {name}")
+                self.__logger.log_trace(f"request {context.body}")
+                self.__logger.log_trace(f"response {context.response}")
+                action.run(context)
+                # for now, we throw on first error in top level sequence
+                if any(context.error_capsules):
+                    error = context.error_capsules[-1]
+                    self.__logger.log_error(f"error found in error capsule {type(error).__name__}")
+                    self.__error_handling_strategy_factory.get_error_handling_strategy().handle_error(context=context,
+                                                                                                      error=error)
+                    self.__logger.log_error(f"command pipeline SHORTED!")
+                    break
+            except Exception as e:
+                self.__logger.log_error(f"command pipeline SHORTED due to an exception!")
+                raise e
+            finally:
+                self.__logger.log_info(f"end command {name}")
