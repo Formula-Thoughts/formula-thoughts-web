@@ -1,8 +1,9 @@
 from unittest import TestCase
+from unittest.mock import Mock, MagicMock
 
-from src.abstractions import Error
+from src.abstractions import Error, ErrorHandlingStrategy
 from src.application import FluentSequenceBuilder, ApplicationContext, TopLevelSequenceRunner, \
-    Command
+    Command, ErrorHandlingStrategyFactory
 from tests import logger_factory
 
 
@@ -48,8 +49,8 @@ class DummyNestedErrorSequenceBuilder(FluentSequenceBuilder):
         super().__init__()
 
     def build(self):
-        self._add_command(Command1())\
-            ._add_command(CommandError())\
+        self._add_command(Command1()) \
+            ._add_command(CommandError()) \
             ._add_command(Command3())
 
 
@@ -59,8 +60,8 @@ class DummyNested2SequenceBuilder(FluentSequenceBuilder):
         super().__init__()
 
     def build(self):
-        self._add_command(Command3())\
-            ._add_command(Command4())\
+        self._add_command(Command3()) \
+            ._add_command(Command4()) \
             ._add_command(Command5())
 
 
@@ -81,59 +82,81 @@ class DummySequenceBuilder(FluentSequenceBuilder):
         self.__sequence = sequence
 
     def build(self):
-        self._add_command(Command1())\
-            ._add_sequence_builder(self.__sequence)\
-            ._add_command(Command2())\
+        self._add_command(Command1()) \
+            ._add_sequence_builder(self.__sequence) \
+            ._add_command(Command2()) \
             ._add_command(Command3())
 
 
 class TestSequenceBuilder(TestCase):
 
+    def setUp(self):
+        self.__error_handling_strategy_factory: ErrorHandlingStrategyFactory = Mock()
+        self.__error_handling_strategy: ErrorHandlingStrategy = Mock()
+        self.__top_level_sequence_runner = TopLevelSequenceRunner(logger=logger_factory(),
+                                                                  error_handling_strategy_factory=self.__error_handling_strategy_factory)
+
     def test_sequence(self):
         # arrange
-        top_level_sequence_runner = TopLevelSequenceRunner(logger=logger_factory())
         sut = DummyNested2SequenceBuilder()
+        self.__error_handling_strategy_factory.get_error_handling_strategy = MagicMock(
+            return_value=self.__error_handling_strategy)
         context = ApplicationContext(body={"trail": []})
 
         # act
-        top_level_sequence_runner.run(context=context,
-                       top_level_sequence=sut)
+        self.__top_level_sequence_runner.run(context=context,
+                                             top_level_sequence=sut)
 
         # assert
         self.assertEqual(context.body["trail"], ["command 3", "command 4", "command 5"])
 
     def test_sequence_with_short_circuit(self):
         # arrange
-        top_level_sequence_runner = TopLevelSequenceRunner(logger=logger_factory())
         sut = DummyNestedErrorSequenceBuilder()
+        self.__error_handling_strategy.handle_error = MagicMock()
+        self.__error_handling_strategy_factory.get_error_handling_strategy = MagicMock(
+            return_value=self.__error_handling_strategy)
         context = ApplicationContext(body={"trail": []})
 
         # act
-        top_level_sequence_runner.run(context=context,
-                       top_level_sequence=sut)
+        self.__top_level_sequence_runner.run(context=context,
+                                             top_level_sequence=sut)
 
         # assert
         with self.subTest("invocations match"):
             self.assertEqual(context.body["trail"], ["command 1"])
 
         # assert
-        with self.subTest("context is updated"):
-            self.assertEqual(context.response, Error(message="error"))
+        with self.subTest("error is handled once"):
+            self.__error_handling_strategy.handle_error.assert_called_once()
+
+        # assert
+        with self.subTest("error is handled with correct args"):
+            self.__error_handling_strategy.handle_error.assert_called_with(context=context,
+                                                                           error=Error(message="error"))
 
 
 class TestComplexSequenceBuilder(TestCase):
 
     def setUp(self) -> None:
         self.__sut = DummySequenceBuilder(sequence=DummyNestedSequenceBuilder(
-                                              sequence=DummyNested2SequenceBuilder()))
-        self.__top_level_sequence_runner = TopLevelSequenceRunner(logger=logger_factory())
+            sequence=DummyNested2SequenceBuilder()))
+        self.__error_handling_strategy: ErrorHandlingStrategy = Mock()
+        self.__error_handling_strategy_factory: ErrorHandlingStrategyFactory = Mock()
+        self.__top_level_sequence_runner = TopLevelSequenceRunner(logger=logger_factory(),
+                                                                  error_handling_strategy_factory=self.__error_handling_strategy_factory)
 
     def test_build_and_run_sequence(self):
-        # act
+        # arrange
         context = ApplicationContext(body={"trail": []})
+        self.__error_handling_strategy_factory.get_error_handling_strategy = MagicMock(
+            return_value=self.__error_handling_strategy)
+
+        # act
         self.__top_level_sequence_runner.run(context=context,
                                              top_level_sequence=self.__sut)
 
         # assert
         with self.subTest(msg="invocations match list"):
-            self.assertEqual(context.body["trail"], ["command 1", "command 3", "command 4", "command 5", "command 2", "command 3"])
+            self.assertEqual(context.body["trail"],
+                             ["command 1", "command 3", "command 4", "command 5", "command 2", "command 3"])

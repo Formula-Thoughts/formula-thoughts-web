@@ -46,39 +46,10 @@ class FluentSequenceBuilder(ABC):
         return list(map(lambda x: x[1], self.__components))
 
 
-class TopLevelSequenceRunner:
-
-    def __init__(self, logger: Logger):
-        self.__logger = logger
-
-    def run(self, context: ApplicationContext,
-            top_level_sequence: SequenceBuilder):
-        commands = top_level_sequence.generate_sequence()
-        for action in commands:
-            name = "anonymous"
-            try:
-                name = f"{inspect.getmodule(action).__name__}.{action.__name__}"
-            except Exception:
-                ...
-            self.__logger.log_event(message="command event", properties={"action": name})
-            self.__logger.log_info(f"begin command {name}")
-            self.__logger.log_trace(f"request {context.body}")
-            self.__logger.log_trace(f"response {context.response}")
-            action.run(context)
-            # for now, we throw on first error in top level sequence
-            if any(context.error_capsules):
-                error = context.error_capsules[-1]
-                self.__logger.log_error(f"error found in error capsule {type(error).__name__}")
-                context.response = error
-                self.__logger.log_error(f"command pipeline SHORTED!")
-                break
-            self.__logger.log_info(f"end command {name}")
-
-
 class ErrorHandlingTypeState:
 
     def __init__(self, default_error_handling_strategy: str):
-        self.__error_handling_type: str = USE_RESPONSE_ERROR
+        self.__error_handling_type: str = default_error_handling_strategy
 
     @property
     def error_handling_type(self) -> str:
@@ -118,3 +89,33 @@ class ErrorHandlingStrategyFactory:
 
     def get_error_handling_strategy(self) -> ErrorHandlingStrategy:
         ...
+
+
+class TopLevelSequenceRunner:
+
+    def __init__(self, error_handling_strategy_factory: ErrorHandlingStrategyFactory, logger: Logger):
+        self.__error_handling_strategy_factory = error_handling_strategy_factory
+        self.__logger = logger
+
+    def run(self, context: ApplicationContext,
+            top_level_sequence: SequenceBuilder):
+        commands = top_level_sequence.generate_sequence()
+        for action in commands:
+            name = "anonymous"
+            try:
+                name = f"{inspect.getmodule(action).__name__}.{action.__name__}"
+            except Exception:
+                ...
+            self.__logger.log_event(message="command event", properties={"action": name})
+            self.__logger.log_info(f"begin command {name}")
+            self.__logger.log_trace(f"request {context.body}")
+            self.__logger.log_trace(f"response {context.response}")
+            action.run(context)
+            # for now, we throw on first error in top level sequence
+            if any(context.error_capsules):
+                error = context.error_capsules[-1]
+                self.__logger.log_error(f"error found in error capsule {type(error).__name__}")
+                context.response = error
+                self.__logger.log_error(f"command pipeline SHORTED!")
+                break
+            self.__logger.log_info(f"end command {name}")

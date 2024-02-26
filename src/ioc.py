@@ -1,9 +1,10 @@
-from typing import TypeVar, Type, Any
+from typing import TypeVar, Type, Any, Callable
 
 import punq
 
-from src.abstractions import Serializer, Deserializer, Logger
-from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState
+from src.abstractions import Serializer, Deserializer, Logger, ErrorHandlingStrategy
+from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, ExceptionErrorHandlingStrategy, \
+    ResponseErrorHandlingStrategy, ErrorHandlingStrategyFactory
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper, JsonConsoleLogger
 from src.events import EventRunner
 from src.exceptions import EventSchemaInvalidException
@@ -37,9 +38,15 @@ class Container:
 
     def register(self, service: Type[T], implementation: Type[T] = None, scope: punq.Scope = punq.Scope.singleton) -> 'Container':
         if implementation is None:
-            self.__container.register(service=service, factory=punq.empty, scope=scope)
+            self.__container.register(service=service, scope=scope)
         else:
             self.__container.register(service, implementation, scope=scope)
+        return self
+
+    def register_factory(self, service: Type[T],
+                         factory: Callable[[], T] = None,
+                         scope: punq.Scope = punq.Scope.singleton) -> 'Container':
+        self.__container.register(service=service, factory=factory, scope=scope)
         return self
 
     def resolve(self, service: Type[T]) -> T:
@@ -53,8 +60,15 @@ class Container:
         return self
 
 
-def register_web(services: Container):
-    services.register(service=ErrorHandlingTypeState, scope=punq.Scope.singleton)
+def register_web(services: Container, default_error_handling_strategy: str):
+    services.register(service=ErrorHandlingStrategy, implementation=ExceptionErrorHandlingStrategy)
+    services.register(service=ErrorHandlingStrategy, implementation=ResponseErrorHandlingStrategy)
+    services.register(service=ErrorHandlingStrategyFactory)
+    services.register_factory(service=ErrorHandlingTypeState,
+                              factory=lambda: ErrorHandlingTypeState(
+                                  default_error_handling_strategy=default_error_handling_strategy
+                              ),
+                              scope=punq.Scope.singleton)
     services.register(service=LambdaRunner)
     services.register(service=EventRunner)
     services.register(service=Serializer, implementation=JsonSnakeToCamelSerializer)
