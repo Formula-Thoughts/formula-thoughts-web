@@ -6,7 +6,7 @@ REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
 
 # Setting up
 setup(
-    name="python-autofixture",
+    name="formula-thoughts-web",
     version="{{VERSION_PLACEHOLDER}}",
     author="GanTheMan",
     author_email="aidanwilliamgannon@gmail.com",
