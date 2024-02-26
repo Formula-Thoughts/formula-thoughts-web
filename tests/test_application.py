@@ -3,7 +3,8 @@ from unittest.mock import Mock, MagicMock
 
 from src.abstractions import Error, ErrorHandlingStrategy
 from src.application import FluentSequenceBuilder, ApplicationContext, TopLevelSequenceRunner, \
-    Command, ErrorHandlingStrategyFactory
+    Command, ErrorHandlingStrategyFactory, ErrorHandlingTypeState
+from src.exceptions import StrategyNotFoundException
 from tests import logger_factory
 
 
@@ -160,3 +161,52 @@ class TestComplexSequenceBuilder(TestCase):
         with self.subTest(msg="invocations match list"):
             self.assertEqual(context.body["trail"],
                              ["command 1", "command 3", "command 4", "command 5", "command 2", "command 3"])
+
+
+class TestErrorHandlingStrategyFactory(TestCase):
+
+    def setUp(self):
+        self.__error_handling_state: ErrorHandlingTypeState = ErrorHandlingTypeState(default_error_handling_strategy="unknown")
+        self.__error_handling_strategy_1: ErrorHandlingStrategy = Mock()
+        self.__error_handling_strategy_2: ErrorHandlingStrategy = Mock()
+        self.__sut = ErrorHandlingStrategyFactory(error_handling_strategies=[self.__error_handling_strategy_1, self.__error_handling_strategy_2],
+                                                  error_handling_type_state=self.__error_handling_state)
+
+    def test_get_strategy_1(self):
+        # arrange
+        self.__error_handling_strategy_1.strategy = "1"
+        self.__error_handling_state.error_handling_type = "1"
+
+        # act
+        strategy = self.__sut.get_error_handling_strategy()
+
+        # assert
+        with self.subTest(msg="strategy returned is strategy 1"):
+            self.assertEqual(strategy, self.__error_handling_strategy_1)
+
+    def test_get_strategy_1_when_there_are_multiple_of_the_same(self):
+        # arrange
+        self.__error_handling_strategy_1.strategy = "1"
+        self.__error_handling_strategy_2.strategy = "1"
+        self.__error_handling_state.error_handling_type = "1"
+
+        # act
+        strategy = self.__sut.get_error_handling_strategy()
+
+        # assert
+        with self.subTest(msg="strategy returned is strategy 1"):
+            self.assertEqual(strategy, self.__error_handling_strategy_1)
+
+    def test_get_strategy_3_when_there_are_no_matching_strategies(self):
+        # arrange
+        self.__error_handling_strategy_1.strategy = "1"
+        self.__error_handling_strategy_2.strategy = "2"
+        self.__error_handling_state.error_handling_type = "3"
+
+        # act
+        sut_call = lambda: self.__sut.get_error_handling_strategy()
+
+        # assert
+        with self.subTest(msg="strategy not found exception is thrown"):
+            with self.assertRaises(expected_exception=StrategyNotFoundException):
+                sut_call()

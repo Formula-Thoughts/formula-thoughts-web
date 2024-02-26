@@ -8,3 +8,7 @@ class EventNotFoundException(Exception):
 
 class MappingException(Exception):
     pass
+
+
+class StrategyNotFoundException(Exception):
+    pass
