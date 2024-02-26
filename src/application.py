@@ -1,10 +1,15 @@
 import inspect
 from abc import ABC, abstractmethod
 
-from src.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext
+from src.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext, Error, \
+    ErrorHandlingStrategy
 
 SUBSEQUENCE = "subsequence"
 COMMAND = "command"
+
+
+USE_RESPONSE_ERROR = "USE_RESPONSE_ERROR"
+USE_EXCEPTION_ERROR = "USE_EXCEPTION_ERROR"
 
 
 class FluentSequenceBuilder(ABC):
@@ -68,3 +73,48 @@ class TopLevelSequenceRunner:
                 self.__logger.log_error(f"command pipeline SHORTED!")
                 break
             self.__logger.log_info(f"end command {name}")
+
+
+class ErrorHandlingTypeState:
+
+    def __init__(self, default_error_handling_strategy: str):
+        self.__error_handling_type: str = USE_RESPONSE_ERROR
+
+    @property
+    def error_handling_type(self) -> str:
+        return self.__error_handling_type
+
+    @error_handling_type.setter
+    def error_handling_type(self, value: str) -> None:
+        self.__error_handling_type = value
+
+
+class ExceptionErrorHandlingStrategy:
+
+    def handle_error(self, context: ApplicationContext, error: Error) -> None:
+        ...
+
+    @property
+    def strategy(self) -> str:
+        return USE_EXCEPTION_ERROR
+
+
+class ResponseErrorHandlingStrategy:
+
+    def handle_error(self, context: ApplicationContext, error: Error) -> None:
+        ...
+
+    @property
+    def strategy(self) -> str:
+        return USE_RESPONSE_ERROR
+
+
+class ErrorHandlingStrategyFactory:
+
+    def __init__(self, error_handling_strategies: list[ErrorHandlingStrategy],
+                 error_handling_type_state: ErrorHandlingTypeState) -> None:
+        self.__error_handling_type_state = error_handling_type_state
+        self.__error_handling_strategies = error_handling_strategies
+
+    def get_error_handling_strategy(self) -> ErrorHandlingStrategy:
+        ...

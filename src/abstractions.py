@@ -26,6 +26,16 @@ class ApplicationContext:
         self.variables[name] = value
 
 
+class ErrorHandlingStrategy(Protocol):
+
+    def handle_error(self, context: ApplicationContext, error: Error) -> None:
+        ...
+
+    @property
+    def strategy(self) -> str:
+        ...
+
+
 class Command(Protocol):
 
     def run(self, context: ApplicationContext) -> None:

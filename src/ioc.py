@@ -3,7 +3,7 @@ from typing import TypeVar, Type, Any
 import punq
 
 from src.abstractions import Serializer, Deserializer, Logger
-from src.application import TopLevelSequenceRunner
+from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState
 from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper, JsonConsoleLogger
 from src.events import EventRunner
 from src.exceptions import EventSchemaInvalidException
@@ -54,6 +54,7 @@ class Container:
 
 
 def register_web(services: Container):
+    services.register(service=ErrorHandlingTypeState, scope=punq.Scope.singleton)
     services.register(service=LambdaRunner)
     services.register(service=EventRunner)
     services.register(service=Serializer, implementation=JsonSnakeToCamelSerializer)
