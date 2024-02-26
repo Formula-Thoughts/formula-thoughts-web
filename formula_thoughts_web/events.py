@@ -1,13 +1,44 @@
 import typing
+import uuid
 from abc import ABC
 from typing import Type
 
-from formula_thoughts_web.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler, Logger
+from botocore.client import BaseClient
+
+from formula_thoughts_web.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler, Logger, \
+    Serializer
 from formula_thoughts_web.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_EXCEPTION_ERROR
 from formula_thoughts_web.crosscutting import ObjectMapper
 from formula_thoughts_web.exceptions import EventNotFoundException
 
 EVENT = "EVENT"
+
+
+TEvent = typing.TypeVar("TEvent")
+
+
+class SQSEventPublisher:
+
+    def __init__(self, sqs_client: BaseClient,
+                 queue_name: str,
+                 serializer: Serializer):
+        self.__serializer = serializer
+        self.__sqs_client = sqs_client
+        self.__queue_url = self.__sqs_client.get_queue_url(QueueName=queue_name)["QueueUrl"],
+
+    def send_sqs_message(self, message_group_id, payload: TEvent):
+        self.__sqs_client.send_message(
+            QueueUrl=self.__queue_url,
+            MessageBody=self.__serializer.serialize(data=payload.__dict__),
+            MessageGroupId=message_group_id,
+            MessageAttributes={
+                'messageType': {
+                    'stringValue': TEvent.__name__,
+                    'dataType': 'String'
+                }
+            },
+            MessageDeduplicationId=str(uuid.uuid4())
+        )
 
 
 class EventRunner:
