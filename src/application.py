@@ -64,7 +64,7 @@ class ErrorHandlingTypeState:
 class ExceptionErrorHandlingStrategy:
 
     def handle_error(self, context: ApplicationContext, error: Error) -> None:
-        ...
+        raise Exception(error.message)
 
     @property
     def strategy(self) -> str:
@@ -74,7 +74,7 @@ class ExceptionErrorHandlingStrategy:
 class ResponseErrorHandlingStrategy:
 
     def handle_error(self, context: ApplicationContext, error: Error) -> None:
-        ...
+        context.response = error
 
     @property
     def strategy(self) -> str:
