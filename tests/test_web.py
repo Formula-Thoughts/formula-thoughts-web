@@ -4,10 +4,10 @@ from unittest.mock import Mock, MagicMock
 
 from callee import Captor, Any
 
-from src.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Deserializer
-from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_RESPONSE_ERROR
-from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
-from src.web import ApiRequestHandlerBase, WebRunner, StatusCodeMapping
+from formula_thoughts_web.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Deserializer
+from formula_thoughts_web.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_RESPONSE_ERROR
+from formula_thoughts_web.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
+from formula_thoughts_web.web import ApiRequestHandlerBase, WebRunner, StatusCodeMapping
 
 
 class ExampleRequestHandler(ApiRequestHandlerBase):

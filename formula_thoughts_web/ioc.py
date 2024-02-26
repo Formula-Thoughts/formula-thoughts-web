@@ -2,13 +2,13 @@ from typing import TypeVar, Type, Any, Callable
 
 import punq
 
-from src.abstractions import Serializer, Deserializer, Logger, ErrorHandlingStrategy
-from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, ExceptionErrorHandlingStrategy, \
+from formula_thoughts_web.abstractions import Serializer, Deserializer, Logger, ErrorHandlingStrategy
+from formula_thoughts_web.application import TopLevelSequenceRunner, ErrorHandlingTypeState, ExceptionErrorHandlingStrategy, \
     ResponseErrorHandlingStrategy, ErrorHandlingStrategyFactory
-from src.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper, JsonConsoleLogger
-from src.events import EventRunner
-from src.exceptions import EventSchemaInvalidException
-from src.web import WebRunner, StatusCodeMapping
+from formula_thoughts_web.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper, JsonConsoleLogger
+from formula_thoughts_web.events import EventRunner
+from formula_thoughts_web.exceptions import EventSchemaInvalidException
+from formula_thoughts_web.web import WebRunner, StatusCodeMapping
 
 
 T = TypeVar('T')

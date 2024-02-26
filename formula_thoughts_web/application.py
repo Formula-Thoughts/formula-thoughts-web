@@ -1,9 +1,9 @@
 import inspect
 from abc import ABC, abstractmethod
 
-from src.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext, Error, \
+from formula_thoughts_web.abstractions import Logger, SequenceComponent, Command, SequenceBuilder, ApplicationContext, Error, \
     ErrorHandlingStrategy
-from src.exceptions import StrategyNotFoundException
+from formula_thoughts_web.exceptions import StrategyNotFoundException
 
 SUBSEQUENCE = "subsequence"
 COMMAND = "command"

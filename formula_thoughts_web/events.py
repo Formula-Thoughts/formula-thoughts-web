@@ -2,10 +2,10 @@ import typing
 from abc import ABC
 from typing import Type
 
-from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler, Logger
-from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_EXCEPTION_ERROR
-from src.crosscutting import ObjectMapper
-from src.exceptions import EventNotFoundException
+from formula_thoughts_web.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler, Logger
+from formula_thoughts_web.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_EXCEPTION_ERROR
+from formula_thoughts_web.crosscutting import ObjectMapper
+from formula_thoughts_web.exceptions import EventNotFoundException
 
 EVENT = "EVENT"
 

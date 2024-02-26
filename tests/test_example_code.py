@@ -4,14 +4,14 @@ from dataclasses import dataclass
 from typing import Protocol
 from unittest import TestCase
 
-from src.abstractions import Command, ApplicationContext, Logger, SequenceBuilder, Deserializer, \
+from formula_thoughts_web.abstractions import Command, ApplicationContext, Logger, SequenceBuilder, Deserializer, \
     ApiRequestHandler, Error, EventHandler
-from src.application import FluentSequenceBuilder, TopLevelSequenceRunner, USE_RESPONSE_ERROR
-from src.crosscutting import ObjectMapper
-from src.events import EventHandlerBase, EVENT
-from src.exceptions import MappingException
-from src.ioc import register_web, Container, LambdaRunner
-from src.web import ApiRequestHandlerBase, WebRunner
+from formula_thoughts_web.application import FluentSequenceBuilder, TopLevelSequenceRunner, USE_RESPONSE_ERROR
+from formula_thoughts_web.crosscutting import ObjectMapper
+from formula_thoughts_web.events import EventHandlerBase, EVENT
+from formula_thoughts_web.exceptions import MappingException
+from formula_thoughts_web.ioc import register_web, Container, LambdaRunner
+from formula_thoughts_web.web import ApiRequestHandlerBase, WebRunner
 
 BAKING_ID = str(uuid.uuid4())
 

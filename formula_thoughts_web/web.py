@@ -1,8 +1,8 @@
 from abc import ABC
 from typing import Type
 
-from src.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Serializer, Logger, Deserializer
-from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_RESPONSE_ERROR
+from formula_thoughts_web.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Serializer, Logger, Deserializer
+from formula_thoughts_web.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_RESPONSE_ERROR
 
 
 class StatusCodeMapping:

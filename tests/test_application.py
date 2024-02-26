@@ -3,11 +3,11 @@ from unittest.mock import Mock, MagicMock
 
 from autofixture import AutoFixture
 
-from src.abstractions import Error, ErrorHandlingStrategy
-from src.application import FluentSequenceBuilder, ApplicationContext, TopLevelSequenceRunner, \
+from formula_thoughts_web.abstractions import Error, ErrorHandlingStrategy
+from formula_thoughts_web.application import FluentSequenceBuilder, ApplicationContext, TopLevelSequenceRunner, \
     Command, ErrorHandlingStrategyFactory, ErrorHandlingTypeState, ResponseErrorHandlingStrategy, \
     ExceptionErrorHandlingStrategy
-from src.exceptions import StrategyNotFoundException
+from formula_thoughts_web.exceptions import StrategyNotFoundException
 from tests import logger_factory
 
 

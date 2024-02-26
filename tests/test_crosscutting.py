@@ -7,7 +7,7 @@ from unittest import TestCase
 import ddt
 from autofixture import AutoFixture
 
-from src.crosscutting import ObjectMapper, JsonCamelToSnakeDeserializer, JsonSnakeToCamelSerializer
+from formula_thoughts_web.crosscutting import ObjectMapper, JsonCamelToSnakeDeserializer, JsonSnakeToCamelSerializer
 
 TEST_DICT_JSON = "{\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2, \"yeastG\": 24.2}"
 TEST_LIST_SERIALIZATION_JSON = "[{\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}, {\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}, {\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}]"

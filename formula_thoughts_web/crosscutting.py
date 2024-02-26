@@ -4,7 +4,7 @@ import re
 import typing
 from enum import Enum
 
-from src.exceptions import MappingException
+from formula_thoughts_web.exceptions import MappingException
 
 
 class LogSeverity(Enum):

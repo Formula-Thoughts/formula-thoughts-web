@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock, call
 
-from src.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler
-from src.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_EXCEPTION_ERROR
-from src.crosscutting import JsonCamelToSnakeDeserializer, ObjectMapper
-from src.events import EventHandlerBase, EventRunner
-from src.exceptions import EventNotFoundException
+from formula_thoughts_web.abstractions import SequenceBuilder, Deserializer, ApplicationContext, EventHandler
+from formula_thoughts_web.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_EXCEPTION_ERROR
+from formula_thoughts_web.crosscutting import JsonCamelToSnakeDeserializer, ObjectMapper
+from formula_thoughts_web.events import EventHandlerBase, EventRunner
+from formula_thoughts_web.exceptions import EventNotFoundException
 
 
 @dataclass(unsafe_hash=True)
