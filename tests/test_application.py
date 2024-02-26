@@ -1,9 +1,12 @@
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock
 
+from autofixture import AutoFixture
+
 from src.abstractions import Error, ErrorHandlingStrategy
 from src.application import FluentSequenceBuilder, ApplicationContext, TopLevelSequenceRunner, \
-    Command, ErrorHandlingStrategyFactory, ErrorHandlingTypeState
+    Command, ErrorHandlingStrategyFactory, ErrorHandlingTypeState, ResponseErrorHandlingStrategy, \
+    ExceptionErrorHandlingStrategy
 from src.exceptions import StrategyNotFoundException
 from tests import logger_factory
 
@@ -210,3 +213,56 @@ class TestErrorHandlingStrategyFactory(TestCase):
         with self.subTest(msg="strategy not found exception is thrown"):
             with self.assertRaises(expected_exception=StrategyNotFoundException):
                 sut_call()
+
+
+class TestResponseErrorHandlingStrategy(TestCase):
+
+    def setUp(self):
+        self.__sut = ResponseErrorHandlingStrategy()
+
+    def test_handle_error_should_set_response(self):
+        # arrange
+        error = AutoFixture().create(dto=Error)
+        context = ApplicationContext()
+
+        # act
+        self.__sut.handle_error(context=context, error=error)
+
+        # assert
+        with self.subTest(msg="assert response is set"):
+            self.assertEqual(context.response, error)
+
+    def test_strategy_should_return_response_strategy(self):
+        # act
+        strategy = self.__sut.strategy
+
+        # assert
+        with self.subTest(msg="assert response is set"):
+            self.assertEqual(strategy, "USE_RESPONSE_ERROR")
+
+
+class TestExceptionErrorHandlingStrategy(TestCase):
+
+    def setUp(self):
+        self.__sut = ExceptionErrorHandlingStrategy()
+
+    def test_handle_error_should_set_response(self):
+        # arrange
+        error = AutoFixture().create(dto=Error)
+        context = ApplicationContext()
+
+        # act
+        sut_call = lambda: self.__sut.handle_error(context=context, error=error)
+
+        # assert
+        with self.subTest(msg="assert exception is thrown"):
+            with self.assertRaises(expected_exception=Exception, msg=error.message):
+                sut_call()
+
+    def test_strategy_should_return_response_strategy(self):
+        # act
+        strategy = self.__sut.strategy
+
+        # assert
+        with self.subTest(msg="assert response is set"):
+            self.assertEqual(strategy, "USE_EXCEPTION_ERROR")
