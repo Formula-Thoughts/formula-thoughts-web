@@ -14,9 +14,6 @@ from formula_thoughts_web.exceptions import EventNotFoundException
 EVENT = "EVENT"
 
 
-TEvent = typing.TypeVar("TEvent")
-
-
 class SQSEventPublisher:
 
     def __init__(self, sqs_client: BaseClient,
@@ -27,14 +24,14 @@ class SQSEventPublisher:
         url = self.__sqs_client.get_queue_url(QueueName=queue_name)
         self.__queue_url = url["QueueUrl"]
 
-    def send_sqs_message(self, message_group_id, payload: TEvent):
+    def send_sqs_message(self, message_group_id, payload: typing.Any):
         self.__sqs_client.send_message(
             QueueUrl=str(self.__queue_url),
             MessageBody=self.__serializer.serialize(data=payload.__dict__),
             MessageGroupId=message_group_id,
             MessageAttributes={
                 'messageType': {
-                    'StringValue': TEvent.__name__,
+                    'StringValue': type(payload).__name__,
                     'DataType': 'String'
                 }
             },
