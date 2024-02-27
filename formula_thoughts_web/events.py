@@ -60,7 +60,7 @@ class EventRunner:
                     body = message['body']
                     self.__logger.add_global_properties(properties={"event_type": event_type})
                     matching_handlers = list(filter(lambda x: f"{x.event_type.__name__}" == event_type, self.__event_handlers))
-                    if len(matching_handlers) is 0:
+                    if len(matching_handlers) == 0:
                         raise EventNotFoundException(f"{event_type} does not match any found handlers")
                     matching_handlers[0].run(event=body)
                 except Exception as e:
