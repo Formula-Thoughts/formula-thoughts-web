@@ -24,7 +24,8 @@ class SQSEventPublisher:
                  serializer: Serializer):
         self.__serializer = serializer
         self.__sqs_client = sqs_client
-        self.__queue_url = self.__sqs_client.get_queue_url(QueueName=queue_name)["QueueUrl"],
+        url = self.__sqs_client.get_queue_url(QueueName=queue_name)
+        self.__queue_url = url["QueueUrl"]
 
     def send_sqs_message(self, message_group_id, payload: TEvent):
         self.__sqs_client.send_message(
