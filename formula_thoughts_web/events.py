@@ -33,8 +33,8 @@ class SQSEventPublisher:
             MessageGroupId=message_group_id,
             MessageAttributes={
                 'messageType': {
-                    'stringValue': TEvent.__name__,
-                    'dataType': 'String'
+                    'StringValue': TEvent.__name__,
+                    'DataType': 'String'
                 }
             },
             MessageDeduplicationId=str(uuid.uuid4())
