@@ -25,8 +25,8 @@ class LambdaRunner:
         self.__web_runner = web_runner
         
     def run(self, event: dict, context: dict) -> dict:
-        self.__logger.log_trace(message=json.dumps(event), properties={"action": "view_events"})
-        self.__logger.log_trace(message=json.dumps(context), properties={"action": "view_context"})
+        self.__logger.log_trace(message=str(event), properties={"action": "view_events"})
+        self.__logger.log_trace(message=str(context), properties={"action": "view_context"})
         # TODO: improve validation, use information from context about request
         if 'routeKey' in event:
             return self.__web_runner.run(event=event)
