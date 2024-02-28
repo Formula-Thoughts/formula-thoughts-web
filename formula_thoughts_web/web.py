@@ -88,7 +88,7 @@ class ApiRequestHandlerBase(ABC):
                 pass
             parameters = {**parameters, **query_parameters}
         try:
-            auth_user_id = event['requestContext']['authorizer']['jwt']['claims']['name']
+            auth_user_id = event['requestContext']['authorizer']['jwt']['claims']['username']
         except KeyError:
             pass
         if 'body' in event:
