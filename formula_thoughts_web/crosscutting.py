@@ -39,7 +39,7 @@ class JsonConsoleLogger:
             "location": name
         }
         log_message = {**message, **self.__request_props, **properties}
-        print(f"{json.dumps(log_message, indent=4)}")
+        print(f"{json.dumps(log_message)}")
 
     def add_global_properties(self, properties: dict):
         self.__request_props = properties

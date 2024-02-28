@@ -1,3 +1,4 @@
+import json
 from typing import TypeVar, Type, Any, Callable
 
 import punq
@@ -17,11 +18,15 @@ T = TypeVar('T')
 class LambdaRunner:
     
     def __init__(self, web_runner: WebRunner,
-                 event_runner: EventRunner):
+                 event_runner: EventRunner,
+                 logger: Logger):
+        self.__logger = logger
         self.__event_runner = event_runner
         self.__web_runner = web_runner
         
     def run(self, event: dict, context: dict) -> dict:
+        self.__logger.log_trace(message=json.dumps(event), properties={"action": "view_events"})
+        self.__logger.log_trace(message=json.dumps(context), properties={"action": "view_context"})
         # TODO: improve validation, use information from context about request
         if 'routeKey' in event:
             return self.__web_runner.run(event=event)
