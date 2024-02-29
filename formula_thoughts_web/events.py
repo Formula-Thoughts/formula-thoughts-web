@@ -18,7 +18,9 @@ class SQSEventPublisher:
 
     def __init__(self, sqs_client: BaseClient,
                  queue_name: str,
-                 serializer: Serializer):
+                 serializer: Serializer,
+                 mapper: ObjectMapper):
+        self.__mapper = mapper
         self.__serializer = serializer
         self.__sqs_client = sqs_client
         url = self.__sqs_client.get_queue_url(QueueName=queue_name)
@@ -27,7 +29,8 @@ class SQSEventPublisher:
     def send_sqs_message(self, message_group_id, payload: typing.Any):
         self.__sqs_client.send_message(
             QueueUrl=str(self.__queue_url),
-            MessageBody=self.__serializer.serialize(data=payload.__dict__),
+            MessageBody=self.__serializer.serialize(data=self.__mapper.map_to_dict(_from=payload,
+                                                                                   to=type(payload))),
             MessageGroupId=message_group_id,
             MessageAttributes={
                 'messageType': {
