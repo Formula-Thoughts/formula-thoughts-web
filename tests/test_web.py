@@ -6,7 +6,7 @@ from callee import Captor, Any
 
 from formula_thoughts_web.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Deserializer
 from formula_thoughts_web.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_RESPONSE_ERROR
-from formula_thoughts_web.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer
+from formula_thoughts_web.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper
 from formula_thoughts_web.web import ApiRequestHandlerBase, WebRunner, StatusCodeMapping
 
 
@@ -128,7 +128,7 @@ class TestRequestHandler(TestCase):
         # arrange
         self.__mock_sequence.generate_sequence = MagicMock()
         self.__mock_pipeline.run = MagicMock()
-        event = {"requestContext": {"authorizer": {"jwt": {"claims": {"name": "bob132"}}}}}
+        event = {"requestContext": {"authorizer": {"jwt": {"claims": {"username": "bob132"}}}}}
 
         # act
         self.__sut.run(event=event)
@@ -180,7 +180,8 @@ class TestWebRunner(TestCase):
                                serializer=JsonSnakeToCamelSerializer(),
                                status_code_mappings=self.__status_code_mapping,
                                logger=Mock(),
-                               error_handling_state=self.__error_handling_state)
+                               error_handling_state=self.__error_handling_state,
+                               object_mapper=ObjectMapper())
 
     def test_run_basic(self):
         # arrange

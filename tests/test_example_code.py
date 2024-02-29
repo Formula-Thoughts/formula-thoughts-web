@@ -1,6 +1,6 @@
 import json
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 from unittest import TestCase
 
@@ -111,6 +111,7 @@ class CreateBreadAsyncCommand(Command, Protocol):
 
 @dataclass
 class BreadResponse:
+    bread: BreadModel = None
     baking_id: str = None
 
 
@@ -176,9 +177,10 @@ class CreateWhiteBreadCommand:
         self.__baking_service = baking_service
 
     def run(self, context: ApplicationContext) -> None:
-        _id = self.__baking_service.bake_bread(context.get_var(BAKING_REQUEST_VAR, BreadModel))
+        bread = context.get_var(BAKING_REQUEST_VAR, BreadModel)
+        _id = self.__baking_service.bake_bread(bread=bread)
         context.set_var(BAKING_ID_VAR, _id)
-        context.response = BreadResponse(_id)
+        context.response = BreadResponse(baking_id=_id, bread=bread)
         
 
 class CreateWhiteBreadAsyncCommand:
@@ -272,7 +274,7 @@ class TestExampleCode(TestCase):
 
         # assert
         with self.subTest(msg="assert body matches"):
-            self.assertEqual(response['body'], "{\"bakingId\": \""+BAKING_ID+"\"}")
+            self.assertEqual(response['body'], "{\"bread\": {\"temperature\": 14.5, \"yeastG\": 24.5, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2}, \"bakingId\": \""+BAKING_ID+"\"}")
 
     def test_run_api_request_handler_when_there_is_error(self):
         # arrange & act

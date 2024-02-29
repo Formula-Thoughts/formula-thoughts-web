@@ -3,6 +3,7 @@ from typing import Type
 
 from formula_thoughts_web.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Serializer, Logger, Deserializer
 from formula_thoughts_web.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_RESPONSE_ERROR
+from formula_thoughts_web.crosscutting import ObjectMapper
 
 
 class StatusCodeMapping:
@@ -24,7 +25,9 @@ class WebRunner:
                  serializer: Serializer,
                  status_code_mappings: StatusCodeMapping,
                  error_handling_state: ErrorHandlingTypeState,
+                 object_mapper: ObjectMapper,
                  logger: Logger):
+        self.__object_mapper = object_mapper
         self.__error_handling_state = error_handling_state
         self.__status_code_mappings = status_code_mappings
         self.__logger = logger
@@ -46,7 +49,7 @@ class WebRunner:
             body = None
             status_code = 204
             if context.response is not None:
-                body = self.__serializer.serialize(data=context.response.__dict__)
+                body = self.__serializer.serialize(data=self.__object_mapper.map_to_dict(_from=context.response, to=type(context.response)))
                 status_code = self.__status_code_mappings.get_mappings(response=type(context.response))
             return {
                 "headers": headers,
