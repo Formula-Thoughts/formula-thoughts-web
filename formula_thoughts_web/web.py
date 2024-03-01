@@ -71,7 +71,9 @@ class ApiRequestHandlerBase(ABC):
     def __init__(self, route_key: str,
                  sequence: SequenceBuilder,
                  command_pipeline: TopLevelSequenceRunner,
-                 deserializer: Deserializer):
+                 deserializer: Deserializer,
+                 logger: Logger):
+        self.__logger = logger
         self.__deserializer = deserializer
         self.__command_pipeline = command_pipeline
         self.__route_key = route_key
@@ -86,13 +88,16 @@ class ApiRequestHandlerBase(ABC):
             if path_parameters is None:
                 pass
             parameters = {**parameters, **path_parameters}
+            self.__logger.add_global_properties(properties={"path_params": path_parameters})
         if 'queryStringParameters' in event:
             query_parameters = event['queryStringParameters']
             if query_parameters is None:
                 pass
             parameters = {**parameters, **query_parameters}
+            self.__logger.add_global_properties(properties={"query_params": query_parameters})
         try:
             auth_user_id = event['requestContext']['authorizer']['jwt']['claims']['username']
+            self.__logger.add_global_properties(properties={"auth_user_id": auth_user_id})
         except KeyError:
             pass
         if 'body' in event:
