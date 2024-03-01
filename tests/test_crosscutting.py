@@ -111,9 +111,17 @@ class InheritedDto:
 
 
 @dataclass(unsafe_hash=True)
+class NestedNestedTestOtherDto:
+    id: str = None
+    name: str = None
+
+
+@dataclass(unsafe_hash=True)
 class NestedTestOtherDto:
     id: str = None
     name: str = None
+    list_of_nested: list[NestedNestedTestOtherDto] = None
+    nested: NestedNestedTestOtherDto = None
 
 
 @dataclass(unsafe_hash=True)
@@ -135,9 +143,17 @@ class TestOtherDto:
 
 
 @dataclass(unsafe_hash=True)
+class NestedNestedTestDto:
+    id: str = None
+    name: str = None
+
+
+@dataclass(unsafe_hash=True)
 class NestedTestDto:
     id: str = None
     name: str = None
+    list_of_nested: list[NestedNestedTestDto] = None
+    nested: NestedNestedTestDto = None
 
 
 @dataclass(unsafe_hash=True)
@@ -170,23 +186,22 @@ class TestMapper(TestCase):
 
         # assert
         with self.subTest(msg="id with default value matches"):
-            assert test_other_dto.id == "default_id"
+            self.assertEqual(test_other_dto.id, "default_id")
 
         # assert
         with self.subTest(msg="date field matches"):
-            assert test_other_dto.date == test_dto.date
+            self.assertEqual(test_other_dto.date, test_dto.date)
 
         # assert
         with self.subTest(msg="list of dates field matches"):
-            assert test_other_dto.list_of_dates == test_dto.list_of_dates
+            self.assertEqual(test_other_dto.list_of_dates, test_dto.list_of_dates)
 
         # assert
         with self.subTest(msg="name field matches"):
-            assert test_other_dto.name == test_dto.name
+            self.assertEqual(test_other_dto.name, test_dto.name)
 
         # assert
         with self.subTest(msg="nested list types match"):
-
             self.assertEqual(get_args(list[NestedTestOtherDto])[0], type(test_other_dto.nested_list[0]))
 
         # assert
@@ -196,7 +211,13 @@ class TestMapper(TestCase):
         # assert
         with self.subTest(msg="nested list field matches"):
             for i in range(0, len(test_other_dto.nested_list)):
-                self.assertEqual(test_other_dto.nested_list[i].__dict__, test_dto.nested_list[i].__dict__)
+                self.assertEqual(test_other_dto.nested_list[i].id, test_dto.nested_list[i].id)
+                self.assertEqual(test_other_dto.nested_list[i].name, test_dto.nested_list[i].name)
+                self.assertEqual(test_other_dto.nested_list[i].nested.name, test_dto.nested_list[i].nested.name)
+                self.assertEqual(test_other_dto.nested_list[i].nested.id, test_dto.nested_list[i].nested.id)
+                for j in range(0, len(test_other_dto.nested_list[i].list_of_nested)):
+                    self.assertEqual(test_other_dto.nested_list[i].list_of_nested[j].id, test_dto.nested_list[i].list_of_nested[j].id)
+                    self.assertEqual(test_other_dto.nested_list[i].list_of_nested[j].name, test_dto.nested_list[i].list_of_nested[j].name)
 
         # assert
         with self.subTest(msg="nested id field matches"):
