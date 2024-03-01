@@ -248,11 +248,13 @@ class CreateBreadRequestHandler(ApiRequestHandlerBase):
 
     def __init__(self, sequence: CreateBreadSequenceBuilder,
                  command_pipeline: TopLevelSequenceRunner,
-                 deserializer: Deserializer):
+                 deserializer: Deserializer,
+                 logger: Logger):
         super().__init__("POST /bake-bread",
                          sequence,
                          command_pipeline,
-                         deserializer)
+                         deserializer,
+                         logger)
 
 
 class CreateBreadRequestEventHandler(EventHandlerBase):

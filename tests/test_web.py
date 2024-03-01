@@ -4,7 +4,8 @@ from unittest.mock import Mock, MagicMock
 
 from callee import Captor, Any
 
-from formula_thoughts_web.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Deserializer
+from formula_thoughts_web.abstractions import SequenceBuilder, ApplicationContext, ApiRequestHandler, Deserializer, \
+    Logger
 from formula_thoughts_web.application import TopLevelSequenceRunner, ErrorHandlingTypeState, USE_RESPONSE_ERROR
 from formula_thoughts_web.crosscutting import JsonSnakeToCamelSerializer, JsonCamelToSnakeDeserializer, ObjectMapper
 from formula_thoughts_web.web import ApiRequestHandlerBase, WebRunner, StatusCodeMapping
@@ -14,11 +15,13 @@ class ExampleRequestHandler(ApiRequestHandlerBase):
 
     def __init__(self, mock_sequence: SequenceBuilder,
                  command_pipeline: TopLevelSequenceRunner,
-                 deserializer: Deserializer):
+                 deserializer: Deserializer,
+                 logger: Logger):
         super().__init__("GET /test/route",
                          mock_sequence,
                          command_pipeline,
-                         deserializer)
+                         deserializer,
+                         logger)
 
 
 class TestRequestHandler(TestCase):
@@ -28,7 +31,8 @@ class TestRequestHandler(TestCase):
         self.__mock_pipeline: TopLevelSequenceRunner = Mock()
         self.__sut = ExampleRequestHandler(mock_sequence=self.__mock_sequence,
                                            command_pipeline=self.__mock_pipeline,
-                                           deserializer=JsonCamelToSnakeDeserializer())
+                                           deserializer=JsonCamelToSnakeDeserializer(),
+                                           logger=Mock())
 
     def test_handle_basic_request(self):
         # arrange
