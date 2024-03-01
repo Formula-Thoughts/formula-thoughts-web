@@ -263,6 +263,17 @@ class TestMapper(TestCase):
         with self.subTest(msg="list of floats field matches"):
             assert test_other_dto.list_of_floats == test_dto.list_of_floats
 
+    def test_map_from_dict(self):
+        # arrange
+        test_dict = {"nested": {"name": "John", "id": "test_id", "list_of_nested": [{"name": "Jane", "id": "test_id2"}]}}
+
+        # act
+        test_other_dto: TestOtherDto = ObjectMapper().map_from_dict(_from=test_dict, to=TestOtherDto)
+
+        # assert
+        with self.subTest(msg="assert nested property is set"):
+            self.assertEqual(test_other_dto.nested.list_of_nested[0].name, "Jane")
+
 
 @ddt.ddt
 class TestJsonSnakeToCamelSerializer(TestCase):

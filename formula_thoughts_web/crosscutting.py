@@ -105,26 +105,29 @@ class ObjectMapper:
         print(f"{vars(_from).items()}")
         return self.__generic_map(_from=_from,
                                   to=to,
-                                  propValues=vars(_from).items())
+                                  propValues=vars(_from).items(),
+                                  map_to=lambda x, y: self.map(_from=x, to=y))
 
     def map_from_dict(self, _from, to: typing.Type[T]) -> T:
         print(_from.items())
         return self.__generic_map(_from=_from,
                                   to=to,
-                                  propValues=_from.items())
+                                  propValues=_from.items(),
+                                  map_to=lambda x, y: self.map_from_dict(_from=x, to=y))
 
     def map_to_dict(self, _from, to: typing.Type[T]) -> dict:
         print(f"{vars(_from).items()}")
         return self.__generic_map(_from=_from,
                                   to=to,
                                   propValues=vars(_from).items(),
-                                  map_callback=lambda x: self.to_dict(x))
+                                  map_callback=lambda x: self.to_dict(x),
+                                  map_to=lambda x, y: self.map_to_dict(_from=x, to=y))
 
     @staticmethod
     def to_dict(obj):
         return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
 
-    def __generic_map(self, _from, to, propValues, map_callback=lambda x: x):
+    def __generic_map(self, _from, to, propValues, map_to, map_callback=lambda x: x):
         try:
             new_dto = to()
             dict_to = all_annotations(to)
@@ -134,13 +137,13 @@ class ObjectMapper:
             for property, value in propValues:
                 if property in dict_to:
                     if bool(typing.get_type_hints(dict_to[property])):
-                        setattr(new_dto, property, map_callback(self.map(_from=value, to=dict_to[property])))
+                        setattr(new_dto, property, map_callback(map_to(value, dict_to[property])))
                     elif (typing.get_origin(dict_to[property]) is list and
                          (bool(typing.get_type_hints(typing.get_args(dict_to[property])[0])))):
                         collection = []
                         sub_item_to = typing.get_args(dict_to[property])[0]
                         for item in value:
-                            collection.append(map_callback(self.map(_from=item, to=sub_item_to)))
+                            collection.append(map_callback(map_to(item, sub_item_to)))
                         setattr(new_dto, property, collection)
                     else:
                         new_dto.__dict__[property] = value
