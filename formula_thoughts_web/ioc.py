@@ -29,8 +29,10 @@ class LambdaRunner:
         self.__logger.log_trace(message=str(context), properties={"action": "view_context"})
         # TODO: improve validation, use information from context about request
         if 'routeKey' in event:
+            self.__logger.add_global_properties(properties={"request_type": "api_handler"})
             return self.__web_runner.run(event=event)
         elif 'Records' in event:
+            self.__logger.add_global_properties(properties={"request_type": "event_handler"})
             return self.__event_runner.run(event=event)
         else:
             raise EventSchemaInvalidException("schema does not match SQS event or API gateway")

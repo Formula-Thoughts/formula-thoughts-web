@@ -37,6 +37,7 @@ class WebRunner:
     def run(self, event) -> dict:
         self.__error_handling_state.error_handling_type = USE_RESPONSE_ERROR
         headers = {"Content-Type": "application/json"}
+        self.__logger.add_global_properties(properties={"route_key": event['routeKey']})
         request_handler_matches = list(filter(lambda x: x.route_key == event['routeKey'], self.__request_handlers))
         if len(request_handler_matches) == 0:
             return {
