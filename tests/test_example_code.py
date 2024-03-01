@@ -1,4 +1,3 @@
-import json
 import uuid
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -11,7 +10,7 @@ from formula_thoughts_web.crosscutting import ObjectMapper
 from formula_thoughts_web.events import EventHandlerBase, EVENT
 from formula_thoughts_web.exceptions import MappingException
 from formula_thoughts_web.ioc import register_web, Container, LambdaRunner
-from formula_thoughts_web.web import ApiRequestHandlerBase, WebRunner
+from formula_thoughts_web.web import ApiRequestHandlerBase
 
 BAKING_ID = str(uuid.uuid4())
 
@@ -46,6 +45,11 @@ def handler(event, context) -> dict:
     return lambda_runner.run(event=event, context=context)
 
 
+@dataclass
+class PreviousBake:
+    id: str = None
+
+
 @dataclass(unsafe_hash=True)
 class BreadModel:
     temperature: float = None
@@ -53,6 +57,7 @@ class BreadModel:
     flour_g: float = None
     water_ml: float = None
     olive_oil_ml: float = None
+    previous_bakes: list[PreviousBake] = field(default_factory=lambda: [])
 
 
 @dataclass(unsafe_hash=True)
@@ -179,6 +184,7 @@ class CreateWhiteBreadCommand:
     def run(self, context: ApplicationContext) -> None:
         bread = context.get_var(BAKING_REQUEST_VAR, BreadModel)
         _id = self.__baking_service.bake_bread(bread=bread)
+        bread.previous_bakes.append(PreviousBake(id=_id))
         context.set_var(BAKING_ID_VAR, _id)
         context.response = BreadResponse(baking_id=_id, bread=bread)
         
@@ -274,7 +280,7 @@ class TestExampleCode(TestCase):
 
         # assert
         with self.subTest(msg="assert body matches"):
-            self.assertEqual(response['body'], "{\"bread\": {\"temperature\": 14.5, \"yeastG\": 24.5, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2}, \"bakingId\": \""+BAKING_ID+"\"}")
+            self.assertEqual(response['body'], "{\"bread\": {\"temperature\": 14.5, \"yeastG\": 24.5, \"flourG\": 546.4, \"waterMl\": 0.1, \"oliveOilMl\": 0.2, \"previousBakes\": [{\"id\": \""+BAKING_ID+"\"}]}, \"bakingId\": \""+BAKING_ID+"\"}")
 
     def test_run_api_request_handler_when_there_is_error(self):
         # arrange & act

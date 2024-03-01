@@ -118,7 +118,11 @@ class ObjectMapper:
         return self.__generic_map(_from=_from,
                                   to=to,
                                   propValues=vars(_from).items(),
-                                  map_callback=lambda x: x.__dict__)
+                                  map_callback=lambda x: self.to_dict(x))
+
+    @staticmethod
+    def to_dict(obj):
+        return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
 
     def __generic_map(self, _from, to, propValues, map_callback=lambda x: x):
         try:
