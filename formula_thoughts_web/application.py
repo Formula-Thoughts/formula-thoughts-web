@@ -105,10 +105,10 @@ class TopLevelSequenceRunner:
     def run(self, context: ApplicationContext,
             top_level_sequence: SequenceBuilder):
         commands = top_level_sequence.generate_sequence()
-        for action in commands:
+        for command in commands:
             name = "anonymous"
             try:
-                name = f"{inspect.getmodule(action).__name__}.{action.__name__}"
+                name = f"{type(command).__module__}.{type(command).__name__}"
             except Exception:
                 ...
             try:
@@ -116,7 +116,7 @@ class TopLevelSequenceRunner:
                 self.__logger.log_info(f"begin command {name}")
                 self.__logger.log_trace(f"request {context.body}")
                 self.__logger.log_trace(f"response {context.response}")
-                action.run(context)
+                command.run(context)
                 # for now, we throw on first error in top level sequence
                 if any(context.error_capsules):
                     error = context.error_capsules[-1]
