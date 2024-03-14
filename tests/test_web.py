@@ -147,6 +147,25 @@ class TestRequestHandler(TestCase):
             context: ApplicationContext = context_captor.arg
             self.assertEqual(context.auth_user_id, "bob132")
 
+    def test_handle_request_with_auth_claims(self):
+        # arrange
+        self.__mock_sequence.generate_sequence = MagicMock()
+        self.__mock_pipeline.run = MagicMock()
+        event = {"requestContext": {"authorizer": {"jwt": {"claims": {"claim1": "claim_1", "claim2": "claim_2"}}}}}
+
+        # act
+        self.__sut.run(event=event)
+
+        context_captor = Captor()
+
+        with self.subTest(msg="assert pipeline was called was correct context and sequence"):
+            self.__mock_pipeline.run.assert_called_with(context=context_captor, top_level_sequence=Any())
+
+        # assert
+        with self.subTest(msg="assert context was built correctly"):
+            context: ApplicationContext = context_captor.arg
+            self.assertEqual(context.variables, {"claim1": "claim_1", "claim2": "claim_2"})
+
     def test_handle_request_with_path_and_query_params(self):
         # arrange
         self.__mock_sequence.generate_sequence = MagicMock()
