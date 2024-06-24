@@ -64,7 +64,6 @@ class JsonConsoleLogger:
         self.__log(_type=LogSeverity.TRACE, message=message, properties=properties)
 
 
-
 def all_annotations(cls):
     d = {}
     for c in cls.mro():
@@ -146,7 +145,7 @@ class ObjectMapper:
                     if bool(typing.get_type_hints(dict_to[property])):
                         setattr(new_dto, property, map_callback(map_to(value, dict_to[property])))
                     elif (typing.get_origin(dict_to[property]) is list and
-                         (bool(typing.get_type_hints(typing.get_args(dict_to[property])[0])))):
+                          (bool(typing.get_type_hints(typing.get_args(dict_to[property])[0])))):
                         collection = []
                         sub_item_to = typing.get_args(dict_to[property])[0]
                         for item in value:
@@ -167,13 +166,14 @@ class JsonSnakeToCamelSerializer:
 
     def __snake_case_to_camel_case_dict(self, d):
         if isinstance(d, list):
-            return [self.__snake_case_to_camel_case_dict(i) if isinstance(i, (dict, list)) else self.__format_value(i) for i in d]
+            return [self.__snake_case_to_camel_case_dict(i) if isinstance(i, (dict, list)) else self.__format_value(i)
+                    for i in d]
         return {self.__snake_case_key_to_camel_case(a): self.__snake_case_to_camel_case_dict(b) if isinstance(b, (
             dict, list)) else self.__format_value(b) for a, b in d.items()}
 
     @staticmethod
     def __format_value(value) -> typing.Any:
-        if(isinstance(value, Enum)):
+        if (isinstance(value, Enum)):
             return value.value
         return value
 
