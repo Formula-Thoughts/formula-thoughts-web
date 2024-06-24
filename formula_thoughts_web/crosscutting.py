@@ -115,7 +115,7 @@ class ObjectMapper:
                                   propValues=_from.items(),
                                   map_to=lambda x, y: self.map_from_dict(_from=x, to=y))
 
-    def map_to_dict(self, _from, to: typing.Type[T]) -> dict:
+    def map_to_dict(self, _from, to: typing.Type[T], preserve_decimal=False) -> dict:
         print(f"{vars(_from).items()}")
         return self.__generic_map(_from=_from,
                                   to=to,
@@ -123,13 +123,16 @@ class ObjectMapper:
                                   map_callback=lambda x: self.to_dict(x),
                                   map_to=lambda x, y: self.map_to_dict(_from=x, to=y))
 
-    def to_dict(self, obj):
-        return json.loads(json.dumps(obj, default=self.default_json_converter))
+    def to_dict(self, obj, preserve_decimal):
+        return json.loads(json.dumps(obj, default=lambda o: self.default_json_converter(o, preserve_decimal)))
 
     @staticmethod
-    def default_json_converter(object):
+    def default_json_converter(object, preserve_decimal):
         if type(object) == Decimal:
-            return float(str(object))
+            if preserve_decimal:
+                return object
+            else:
+                return float(str(object))
         else:
             return object.__dict__
 
