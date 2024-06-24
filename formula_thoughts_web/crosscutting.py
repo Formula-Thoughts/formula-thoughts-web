@@ -120,7 +120,7 @@ class ObjectMapper:
         return self.__generic_map(_from=_from,
                                   to=to,
                                   propValues=vars(_from).items(),
-                                  map_callback=lambda x: self.to_dict(x),
+                                  map_callback=lambda x: self.to_dict(x, preserve_decimal=preserve_decimal),
                                   map_to=lambda x, y: self.map_to_dict(_from=x, to=y))
 
     def to_dict(self, obj, preserve_decimal):
