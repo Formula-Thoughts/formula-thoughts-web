@@ -2,6 +2,7 @@ import inspect
 import json
 import re
 import typing
+from decimal import Decimal
 from enum import Enum
 
 from formula_thoughts_web.exceptions import MappingException
@@ -123,9 +124,15 @@ class ObjectMapper:
                                   map_callback=lambda x: self.to_dict(x),
                                   map_to=lambda x, y: self.map_to_dict(_from=x, to=y))
 
+    def to_dict(self, obj):
+        return json.loads(json.dumps(obj, default=self.default_json_converter))
+
     @staticmethod
-    def to_dict(obj):
-        return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
+    def default_json_converter(object):
+        if type(object) == Decimal:
+            return float(str(object))
+        else:
+            return object.__dict__
 
     def __generic_map(self, _from, to, propValues, map_to, map_callback=lambda x: x):
         try:
