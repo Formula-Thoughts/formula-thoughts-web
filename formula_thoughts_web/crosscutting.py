@@ -157,7 +157,7 @@ class ObjectMapper:
                     elif dict_to[property] is Decimal:
                         if type(value) is str:
                             new_dto.__dict__[property] = Decimal(value)
-                        if type(value) is float:
+                        elif type(value) is float:
                             new_dto.__dict__[property] = Decimal(str(value))
                         else:
                             new_dto.__dict__[property] = value
@@ -166,11 +166,11 @@ class ObjectMapper:
                         for item in value:
                             if type(item) is str:
                                 decimals.append(Decimal(item))
-                            if type(item) is float:
+                            elif type(item) is float:
                                 decimals.append(Decimal(str(item)))
                             else:
                                 decimals.append(item)
-                        new_dto.__dict__[property] = decimals
+                            new_dto.__dict__[property] = decimals
                     else:
                         new_dto.__dict__[property] = value
             print(f"__generic_map from {type(_from)} {to} and mapped {_from} out -> {new_dto}")
