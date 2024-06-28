@@ -130,7 +130,7 @@ class ObjectMapper:
     def default_json_converter(object, preserve_decimal):
         if type(object) == Decimal:
             if preserve_decimal:
-                return object
+                return str(object)
             else:
                 return float(str(object))
         else:
@@ -154,6 +154,19 @@ class ObjectMapper:
                         for item in value:
                             collection.append(map_callback(map_to(item, sub_item_to)))
                         setattr(new_dto, property, collection)
+                    elif dict_to[property] is Decimal:
+                        if type(value) is str:
+                            new_dto.__dict__[property] = Decimal(value)
+                        if type(value) is float:
+                            new_dto.__dict__[property] = Decimal(str(value))
+                    elif dict_to[property] == list[Decimal]:
+                        decimals = []
+                        for item in value:
+                            if type(item) is str:
+                                decimals.append(Decimal(item))
+                            if type(item) is float:
+                                decimals.append(Decimal(str(item)))
+                        new_dto.__dict__[property] = decimals
                     else:
                         new_dto.__dict__[property] = value
             print(f"__generic_map from {type(_from)} {to} and mapped {_from} out -> {new_dto}")
