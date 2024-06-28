@@ -159,6 +159,8 @@ class ObjectMapper:
                             new_dto.__dict__[property] = Decimal(value)
                         if type(value) is float:
                             new_dto.__dict__[property] = Decimal(str(value))
+                        else:
+                            new_dto.__dict__[property] = value
                     elif dict_to[property] == list[Decimal]:
                         decimals = []
                         for item in value:
@@ -166,6 +168,8 @@ class ObjectMapper:
                                 decimals.append(Decimal(item))
                             if type(item) is float:
                                 decimals.append(Decimal(str(item)))
+                            else:
+                                decimals.append(item)
                         new_dto.__dict__[property] = decimals
                     else:
                         new_dto.__dict__[property] = value
