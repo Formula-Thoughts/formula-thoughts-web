@@ -5,6 +5,7 @@ import typing
 from decimal import Decimal
 from enum import Enum
 
+from formula_thoughts_web.abstractions import Serializer
 from formula_thoughts_web.exceptions import MappingException
 
 
@@ -19,7 +20,8 @@ class LogSeverity(Enum):
 
 class JsonConsoleLogger:
 
-    def __init__(self):
+    def __init__(self, serializer: Serializer):
+        self.__serializer = serializer
         self.__request_props = {}
 
     def __log(self, _type: LogSeverity, message: str, properties: dict):
@@ -40,7 +42,7 @@ class JsonConsoleLogger:
             "location": name
         }
         log_message = {**message, **self.__request_props, **properties}
-        print(f"{json.dumps(log_message)}")
+        print(f"{self.__serializer.serialize(log_message)}")
 
     def add_global_properties(self, properties: dict):
         self.__request_props = properties

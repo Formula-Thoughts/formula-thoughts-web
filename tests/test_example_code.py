@@ -1,5 +1,6 @@
 import uuid
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Protocol
 from unittest import TestCase
 
@@ -52,7 +53,7 @@ class PreviousBake:
 
 @dataclass(unsafe_hash=True)
 class BreadModel:
-    temperature: float = None
+    temperature: Decimal = None
     yeast_g: float = None
     flour_g: float = None
     water_ml: float = None
@@ -62,7 +63,7 @@ class BreadModel:
 
 @dataclass(unsafe_hash=True)
 class BreadNotification:
-    temperature: float = None
+    temperature: Decimal = None
     baking_id: str = None
 
 
@@ -160,7 +161,7 @@ class ValidateWhiteBreadRequestCommand:
     def run(self, context: ApplicationContext) -> None:
         request = context.get_var(BAKING_REQUEST_VAR, BreadModel)
 
-        if request.temperature <= 0:
+        if request.temperature <= Decimal('0'):
             context.error_capsules.append(temperature_error)
 
         if request.yeast_g <= 0:
