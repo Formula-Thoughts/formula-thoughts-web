@@ -2,6 +2,7 @@ import inspect
 import json
 import re
 import typing
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
@@ -135,6 +136,8 @@ class ObjectMapper:
                 return str(object)
             else:
                 return float(str(object))
+        elif type(object) == datetime:
+            return str(object)
         else:
             return object.__dict__
 
