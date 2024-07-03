@@ -6,6 +6,8 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
+import dateutil
+
 from formula_thoughts_web.abstractions import Serializer
 from formula_thoughts_web.exceptions import MappingException
 
@@ -137,7 +139,7 @@ class ObjectMapper:
             else:
                 return float(str(object))
         elif type(object) == datetime:
-            return str(object)
+            return object.isoformat()
         else:
             return object.__dict__
 
@@ -159,6 +161,8 @@ class ObjectMapper:
                         for item in value:
                             collection.append(map_callback(map_to(item, sub_item_to)))
                         setattr(new_dto, property, collection)
+                    elif dict_to[property] is datetime:
+                        new_dto.__dict__[property] = datetime.fromisoformat(value)
                     elif dict_to[property] is Decimal:
                         if type(value) is str:
                             new_dto.__dict__[property] = Decimal(value)

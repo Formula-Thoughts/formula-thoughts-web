@@ -268,7 +268,7 @@ class TestMapper(TestCase):
 
     def test_map_from_dict(self):
         # arrange
-        test_dict = {"nested": {"name": "John", "id": "test_id", "list_of_nested": [{"name": "Jane", "id": "test_id2"}]}, "real_decimal_num": "12.4", "list_of_decimals": ["123.4", 123.5]}
+        test_dict = {"nested": {"name": "John", "id": "test_id", "list_of_nested": [{"name": "Jane", "id": "test_id2"}]}, "real_decimal_num": "12.4", "list_of_decimals": ["123.4", 123.5], "date": '2024-07-03T23:45:09.699086'}
 
         # act
         test_other_dto: TestOtherDto = ObjectMapper().map_from_dict(_from=test_dict, to=TestOtherDto)
@@ -284,6 +284,12 @@ class TestMapper(TestCase):
         # assert
         with self.subTest(msg="assert decimals are set"):
             self.assertEqual(test_other_dto.list_of_decimals, [Decimal("123.4"), Decimal("123.5")])
+
+        # assert
+        with self.subTest(msg="assert dates are set"):
+            self.assertEqual(test_other_dto.date.day, 3)
+            self.assertEqual(test_other_dto.date.month, 7)
+            self.assertEqual(test_other_dto.date.year, 2024)
 
 
 @ddt.ddt
