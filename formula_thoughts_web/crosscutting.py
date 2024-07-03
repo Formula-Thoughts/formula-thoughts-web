@@ -161,7 +161,7 @@ class ObjectMapper:
                         for item in value:
                             collection.append(map_callback(map_to(item, sub_item_to)))
                         setattr(new_dto, property, collection)
-                    elif dict_to[property] is datetime:
+                    elif dict_to[property] is datetime and type(value) is str:
                         new_dto.__dict__[property] = datetime.fromisoformat(value)
                     elif dict_to[property] is Decimal:
                         if type(value) is str:
