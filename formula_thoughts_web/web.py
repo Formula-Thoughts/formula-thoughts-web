@@ -108,6 +108,7 @@ class ApiRequestHandlerBase(ABC):
                 json_body = self.__deserializer.deserialize(event['body'])
                 body = json_body
             except ValueError:
+                self.__logger.log_info("Cannot serialize to dictionary, using string instead")
                 body = event['body']
         context = ApplicationContext(body=body,
                                      auth_user_id=auth_user_id,
