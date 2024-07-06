@@ -1,3 +1,4 @@
+import base64
 import inspect
 import json
 import re
@@ -232,3 +233,11 @@ class JsonCamelToSnakeDeserializer:
 
 def utc_now() -> datetime:
     return datetime.utcnow()
+
+
+def base64encode(s: str) -> str:
+    return base64.b64decode(s).decode('utf-8')
+
+
+def base64decode(s: str) -> str:
+    return base64.b64encode(s.encode('utf-8')).decode('utf-8')
