@@ -236,8 +236,8 @@ def utc_now() -> datetime:
 
 
 def base64encode(s: str) -> str:
-    return base64.b64decode(s).decode('utf-8')
+    return base64.b64encode(bytes(s, 'utf-8')).decode('utf-8')
 
 
 def base64decode(s: str) -> str:
-    return base64.b64encode(s.encode('utf-8')).decode('utf-8')
+    return base64.b64decode(bytes(s, 'utf-8')).decode('utf-8')

@@ -8,7 +8,8 @@ from unittest import TestCase
 import ddt
 from autofixture import AutoFixture
 
-from formula_thoughts_web.crosscutting import ObjectMapper, JsonCamelToSnakeDeserializer, JsonSnakeToCamelSerializer
+from formula_thoughts_web.crosscutting import ObjectMapper, JsonCamelToSnakeDeserializer, JsonSnakeToCamelSerializer, \
+    base64encode, base64decode
 
 TEST_DICT_JSON = "{\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2, \"yeastG\": 24.2}"
 TEST_LIST_SERIALIZATION_JSON = "[{\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}, {\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}, {\"name\": \"adam raymond\", \"snakeInValue\": \"snake_in_value\", \"value2To3Values\": 2}]"
@@ -405,3 +406,28 @@ class TestJsonCamelToSnakeCaseDeserializer(TestCase):
 
         # assert
         self.assertEqual(actual, expected)
+
+
+class TestBase64(TestCase):
+
+    def test_base64encode(self):
+        # arrange
+        string = "https://www.this.that.com"
+
+        # act
+        base64_encoded_string = base64encode(string)
+
+        # assert
+        with self.subTest(msg="assert string is properly encoded"):
+            self.assertEqual(base64_encoded_string, "aHR0cHM6Ly93d3cudGhpcy50aGF0LmNvbQ==")
+
+    def test_base64decode(self):
+        # arrange
+        string = "aHR0cHM6Ly93d3cudGhpcy50aGF0LmNvbQ=="
+
+        # act
+        base64_decoded_string = base64decode(string)
+
+        # assert
+        with self.subTest(msg="assert string is properly encoded"):
+            self.assertEqual(base64_decoded_string, "https://www.this.that.com")
