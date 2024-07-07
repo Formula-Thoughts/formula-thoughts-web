@@ -141,6 +141,8 @@ class ObjectMapper:
                 return float(str(object))
         elif type(object) == datetime:
             return object.isoformat()
+        elif type(object) == set:
+            return object
         else:
             return object.__dict__
 
